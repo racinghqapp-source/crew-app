@@ -7,6 +7,7 @@ import { ensureProfile } from "./api/profile";
 import Login from "./pages/Login";
 
 import MyParticipations from "./pages/MyParticipations";
+import ReputationCard from "./components/ReputationCard";
 
 export default function App() {
   const { user, loading } = useSession();
@@ -94,6 +95,9 @@ export default function App() {
       <div style={{ marginTop: 16, fontSize: 12, opacity: 0.75 }}>
         Next: Participations → Confirm → Rate → Reputation updates.
       </div>
+
+      <ReputationCard userId={user.id} />
+
     </div>
   );
 }
