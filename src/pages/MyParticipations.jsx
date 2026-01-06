@@ -9,7 +9,7 @@ import {
 import { hasMyRatingForParticipation, submitSimpleRating } from "../api/ratings";
 import RatingModal from "../components/RatingModal";
 
-export default function MyParticipations() {
+export default function MyParticipations({ onRated }) {
   const { user } = useSession();
   const [rows, setRows] = useState([]);
   const [err, setErr] = useState(null);
@@ -54,7 +54,6 @@ export default function MyParticipations() {
   async function openRating(p) {
     setErr(null);
     try {
-      // prevent duplicate rating per rater per participation
       const already = await hasMyRatingForParticipation(p.id, user.id);
       if (already) {
         setErr("You have already rated this participation.");
@@ -90,8 +89,11 @@ export default function MyParticipations() {
 
       setRatingOpen(false);
       setRatingTarget(null);
+
       await load();
-      // Reputation trigger should run automatically if installed.
+
+      // ✅ Tell parent (App) to refresh reputation card
+      onRated?.();
     } catch (e) {
       setErr(e.message ?? String(e));
     } finally {
@@ -126,7 +128,7 @@ export default function MyParticipations() {
               (p.owner_id === user.id && !p.owner_confirmed) ||
               (p.sailor_id === user.id && !p.sailor_confirmed);
 
-            const canRate = !!p.verified_at; // enforced by DB too
+            const canRate = !!p.verified_at;
             const canOpenRate = canRate && !isBusy;
 
             return (
@@ -149,6 +151,7 @@ export default function MyParticipations() {
               </tr>
             );
           })}
+
           {!rows.length && (
             <tr>
               <td colSpan="6" style={{ opacity: 0.7, paddingTop: 12 }}>

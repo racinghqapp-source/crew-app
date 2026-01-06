@@ -15,6 +15,9 @@ export default function App() {
   const [bootErr, setBootErr] = useState(null);
   const [booting, setBooting] = useState(false);
 
+  // ✅ bump this to force ReputationCard refresh after rating submit
+  const [repBump, setRepBump] = useState(0);
+
   useEffect(() => {
     let mounted = true;
 
@@ -84,20 +87,26 @@ export default function App() {
 
       <h3 style={{ marginTop: 0 }}>Profile</h3>
       <div>
-        <div><b>Name:</b> {profile?.display_name}</div>
-        <div><b>Type:</b> {profile?.profile_type}</div>
-        <div><b>User ID:</b> {profile?.id}</div>
+        <div>
+          <b>Name:</b> {profile?.display_name}
+        </div>
+        <div>
+          <b>Type:</b> {profile?.profile_type}
+        </div>
+        <div>
+          <b>User ID:</b> {profile?.id}
+        </div>
       </div>
 
-      {/* ✅ Render participations inside the returned JSX */}
-      <MyParticipations />
+      {/* ✅ Reputation is refreshed when repBump changes */}
+      <ReputationCard userId={user.id} bump={repBump} />
+
+      {/* ✅ Tell App when a rating is submitted so it refreshes reputation */}
+      <MyParticipations onRated={() => setRepBump((n) => n + 1)} />
 
       <div style={{ marginTop: 16, fontSize: 12, opacity: 0.75 }}>
         Next: Participations → Confirm → Rate → Reputation updates.
       </div>
-
-      <ReputationCard userId={user.id} />
-
     </div>
   );
 }
