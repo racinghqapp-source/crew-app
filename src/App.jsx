@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import MyParticipations from "./pages/MyParticipations";
 import OwnerApplicants from "./pages/OwnerApplicants";
 import Upgrade from "./pages/Upgrade";
+import Discovery from "./pages/Discovery";
 
 export default function App() {
   const { user, loading } = useSession();
@@ -123,6 +124,9 @@ export default function App() {
         planTier={profile?.plan_tier}
         onUpgraded={() => setPlanBump((n) => n + 1)}
       />
+
+      {/* Discovery */}
+      <Discovery profileType={profile?.profile_type} />
 
       {/* Participations */}
       <MyParticipations />
