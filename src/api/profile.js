@@ -1,227 +1,45 @@
-import { useEffect, useMemo, useState } from "react";
-import { useSession } from "../hooks/useSession";
-import {
-  fetchMyEvents,
-  fetchApplicationsForEvent,
-  fetchProfilesByIds,
-  setApplicationStatus,
-} from "../api/owner";
+// src/api/profile.js
+import { supabase } from "../lib/supabase";
 
-function bandBonus(band) {
-  const v = (band || "unknown").toLowerCase();
-  if (v === "high") return 15;
-  if (v === "medium") return 7;
-  if (v === "low") return -5;
-  return 0;
-}
+/**
+ * Ensures a profiles row exists for the logged-in user.
+ * Safe to call repeatedly.
+ */
+export async function ensureProfile({ user }) {
+  if (!user?.id) throw new Error("ensureProfile: missing user");
 
-function scoreProfile(p) {
-  // simple, explainable scoring (tune later)
-  const reliability = Number(p?.reliability_score ?? 0); // 0..100
-  const wouldAgain = Number(p?.would_sail_again_pct ?? 0); // 0..100
-  const verified = Number(p?.verified_participations_count ?? 0); // count
-  const band = bandBonus(p?.competence_band);
+  const { data: existing, error: selErr } = await supabase
+    .from("profiles")
+    .select("id, display_name, profile_type, plan_tier")
+    .eq("id", user.id)
+    .maybeSingle();
 
-  // weights:
-  // - reliability is king
-  // - would sail again reinforces
-  // - verified gives confidence
-  // - band provides quick lift
-  const score = reliability + wouldAgain * 0.35 + Math.min(verified, 20) * 2 + band;
-  return Math.round(score);
-}
+  if (selErr) throw selErr;
+  if (existing) return existing;
 
-export default function OwnerApplicants({ profileType }) {
-  const { user } = useSession();
-  const [events, setEvents] = useState([]);
-  const [eventId, setEventId] = useState("");
-  const [apps, setApps] = useState([]);
-  const [profilesById, setProfilesById] = useState({});
-  const [err, setErr] = useState(null);
-  const [loadingEvents, setLoadingEvents] = useState(false);
-  const [loadingApps, setLoadingApps] = useState(false);
-  const [busyAppId, setBusyAppId] = useState(null);
+  const displayName =
+    user.user_metadata?.full_name ||
+    user.user_metadata?.name ||
+    (user.email ? user.email.split("@")[0] : "New User");
 
-  async function loadEvents() {
-    setErr(null);
-    setLoadingEvents(true);
-    try {
-      const data = await fetchMyEvents(user.id);
-      setEvents(data);
-      if (!eventId && data.length) setEventId(data[0].id);
-    } catch (e) {
-      setErr(e.message ?? String(e));
-    } finally {
-      setLoadingEvents(false);
-    }
-  }
+  const payload = {
+    id: user.id,
+    display_name: displayName,
+    profile_type: "sailor",
+    location_text: "Melbourne, VIC",
+    roles: [],
+    boat_experience: [],
+    is_available: false,
+    willing_to_travel: true,
+    plan_tier: "free",
+  };
 
-  async function loadApps(eid) {
-    if (!eid) {
-      setApps([]);
-      setProfilesById({});
-      return;
-    }
+  const { data: ins, error: insErr } = await supabase
+    .from("profiles")
+    .insert(payload)
+    .select("id, display_name, profile_type, plan_tier")
+    .single();
 
-    setErr(null);
-    setLoadingApps(true);
-    try {
-      const a = await fetchApplicationsForEvent(eid);
-      setApps(a);
-
-      const sailorIds = Array.from(new Set((a ?? []).map((x) => x.sailor_id).filter(Boolean)));
-      const profs = await fetchProfilesByIds(sailorIds);
-
-      const map = {};
-      for (const p of profs) map[p.id] = p;
-      setProfilesById(map);
-    } catch (e) {
-      setErr(e.message ?? String(e));
-    } finally {
-      setLoadingApps(false);
-    }
-  }
-
-  useEffect(() => {
-    if (!user?.id) return;
-    loadEvents();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (!user?.id) return;
-    loadApps(eventId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eventId, user?.id]);
-
-  const ranked = useMemo(() => {
-    const rows = (apps ?? []).map((a) => {
-      const p = profilesById[a.sailor_id];
-      const score = p ? scoreProfile(p) : 0;
-      return { a, p, score };
-    });
-
-    rows.sort((x, y) => y.score - x.score);
-    return rows;
-  }, [apps, profilesById]);
-
-  async function updateStatus(appId, status) {
-    setBusyAppId(appId);
-    setErr(null);
-    try {
-      await setApplicationStatus(appId, status);
-      await loadApps(eventId);
-    } catch (e) {
-      setErr(e.message ?? String(e));
-    } finally {
-      setBusyAppId(null);
-    }
-  }
-
-  // Non-owner sees nothing (for now)
-  if (!user) return null;
-  if (profileType !== "owner") {
-    return (
-      <div style={{ marginTop: 24, border: "1px solid #eee", borderRadius: 12, padding: 14 }}>
-        <h3 style={{ marginTop: 0 }}>Owner Applicants</h3>
-        <div style={{ fontSize: 12, opacity: 0.75 }}>
-          This section appears for <b>owner</b> accounts.
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ marginTop: 24, border: "1px solid #eee", borderRadius: 12, padding: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-        <h3 style={{ margin: 0 }}>Owner Applicants</h3>
-        <button onClick={loadEvents} disabled={loadingEvents}>
-          {loadingEvents ? "Refreshing…" : "Refresh"}
-        </button>
-      </div>
-
-      {err && <div style={{ color: "crimson", marginTop: 10 }}>{err}</div>}
-
-      <div style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "center" }}>
-        <div style={{ fontSize: 12, opacity: 0.7 }}>Event</div>
-        <select
-          value={eventId}
-          onChange={(e) => setEventId(e.target.value)}
-          style={{ padding: 10, minWidth: 280 }}
-        >
-          {!events.length && <option value="">No events found</option>}
-          {events.map((ev) => (
-            <option key={ev.id} value={ev.id}>
-              {ev.title ?? "Untitled"} ({ev.start_date ?? "?"})
-            </option>
-          ))}
-        </select>
-
-        <button onClick={() => loadApps(eventId)} disabled={loadingApps || !eventId}>
-          {loadingApps ? "Loading…" : "Load applicants"}
-        </button>
-      </div>
-
-      <div style={{ marginTop: 12, fontSize: 12, opacity: 0.75 }}>
-        Ranked by reliability + would-sail-again + verified sails + competence band.
-      </div>
-
-      <div style={{ marginTop: 12 }}>
-        <table width="100%" cellPadding="8" style={{ borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>
-              <th>#</th>
-              <th>Sailor</th>
-              <th>Score</th>
-              <th>Reliability</th>
-              <th>Would again</th>
-              <th>Verified</th>
-              <th>Band</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ranked.map(({ a, p, score }, idx) => {
-              const isBusy = busyAppId === a.id;
-              return (
-                <tr key={a.id} style={{ borderBottom: "1px solid #eee" }}>
-                  <td>{idx + 1}</td>
-                  <td>{p?.display_name ?? a.sailor_id?.slice(0, 8) ?? "—"}</td>
-                  <td><b>{score}</b></td>
-                  <td>{p?.reliability_score ?? 0}</td>
-                  <td>{p?.would_sail_again_pct ?? 0}%</td>
-                  <td>{p?.verified_participations_count ?? 0}</td>
-                  <td>{(p?.competence_band ?? "unknown").toUpperCase()}</td>
-                  <td>{a.preferred_role ?? "—"}</td>
-                  <td>{a.status ?? "—"}</td>
-                  <td style={{ display: "flex", gap: 8 }}>
-                    <button disabled={isBusy} onClick={() => updateStatus(a.id, "accepted")}>
-                      Accept
-                    </button>
-                    <button disabled={isBusy} onClick={() => updateStatus(a.id, "rejected")}>
-                      Reject
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-
-            {!ranked.length && (
-              <tr>
-                <td colSpan="10" style={{ opacity: 0.7, paddingTop: 12 }}>
-                  {eventId ? "No applications yet for this event." : "Select an event to view applications."}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div style={{ marginTop: 10, fontSize: 12, opacity: 0.75 }}>
-        Next upgrade: show each sailor’s last 5 ratings + no-show flags (paid feature).
-      </div>
-    </div>
-  );
+  if (insErr) throw insErr;
+  return ins;
 }
