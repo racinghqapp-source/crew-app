@@ -1,35 +1,94 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
+import { supabase } from "./lib/supabase";
+import { useSession } from "./hooks/useSession";
+import { ensureProfile } from "./api/profile";
+import Login from "./pages/Login";
+
+export default function App() {
+  const { user, loading } = useSession();
+  const [profile, setProfile] = useState(null);
+  const [bootErr, setBootErr] = useState(null);
+  const [booting, setBooting] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function boot() {
+      setBootErr(null);
+      setProfile(null);
+
+      if (!user?.id) return;
+
+      setBooting(true);
+      try {
+        const p = await ensureProfile({ user });
+        if (!mounted) return;
+        setProfile(p);
+      } catch (e) {
+        if (!mounted) return;
+        setBootErr(e.message ?? String(e));
+      } finally {
+        if (mounted) setBooting(false);
+      }
+    }
+
+    boot();
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id]);
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    setProfile(null);
+  }
+
+  if (loading) return <div style={{ padding: 16 }}>Loading session…</div>;
+  if (!user) return <Login />;
+
+  if (booting) return <div style={{ padding: 16 }}>Setting up your profile…</div>;
+
+  if (bootErr) {
+    return (
+      <div style={{ padding: 16 }}>
+        <h3>Boot error</h3>
+        <div style={{ color: "crimson" }}>{bootErr}</div>
+        <button style={{ marginTop: 12 }} onClick={signOut}>
+          Sign out
+        </button>
+        <div style={{ marginTop: 12, fontSize: 12, opacity: 0.75 }}>
+          Common causes: RLS policies, missing columns, or env vars not set.
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div style={{ padding: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <h2 style={{ margin: 0 }}>Crew App</h2>
+          <div style={{ fontSize: 12, opacity: 0.8 }}>
+            Signed in as <b>{user.email}</b>
+          </div>
+        </div>
+        <button onClick={signOut}>Sign out</button>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
 
-export default App
+      <hr style={{ margin: "16px 0" }} />
+
+      <h3 style={{ marginTop: 0 }}>Profile</h3>
+      <div>
+        <div><b>Name:</b> {profile?.display_name}</div>
+        <div><b>Type:</b> {profile?.profile_type}</div>
+        <div><b>User ID:</b> {profile?.id}</div>
+      </div>
+
+      <div style={{ marginTop: 16, fontSize: 12, opacity: 0.75 }}>
+        Next: Participations → Confirm → Rate → Reputation updates.
+      </div>
+    </div>
+  );
+}
