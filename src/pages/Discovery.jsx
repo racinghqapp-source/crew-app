@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchDiscoverProfiles } from "../api/discovery";
+import { fetchMyEvents } from "../api/owner";
+import { ownerInviteSailor } from "../api/invites";
+import { useSession } from "../hooks/useSession";
+import InviteModal from "../components/InviteModal";
 
 function safeArr(v) {
   return Array.isArray(v) ? v : [];
@@ -24,6 +28,8 @@ function Pill({ children }) {
 }
 
 export default function Discovery({ profileType }) {
+  const { user } = useSession();
+
   const [search, setSearch] = useState("");
   const [role, setRole] = useState("");
   const [availableOnly, setAvailableOnly] = useState(false);
@@ -31,6 +37,12 @@ export default function Discovery({ profileType }) {
   const [rows, setRows] = useState([]);
   const [err, setErr] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Owner invite state
+  const [events, setEvents] = useState([]);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteTarget, setInviteTarget] = useState(null);
+  const [inviteBusy, setInviteBusy] = useState(false);
 
   async function load() {
     setErr(null);
@@ -50,11 +62,25 @@ export default function Discovery({ profileType }) {
     }
   }
 
-  // Load initially + whenever filters change (simple MVP behavior)
+  async function loadOwnerEvents() {
+    if (!user?.id) return;
+    try {
+      const data = await fetchMyEvents(user.id);
+      setEvents(data);
+    } catch {
+      // ignore; owner may have no events or no access
+    }
+  }
+
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, role, availableOnly]);
+
+  useEffect(() => {
+    if (profileType === "owner") loadOwnerEvents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileType, user?.id]);
 
   const allRoles = useMemo(() => {
     const set = new Set();
@@ -63,6 +89,33 @@ export default function Discovery({ profileType }) {
     }
     return Array.from(set).sort();
   }, [rows]);
+
+  function openInvite(sailor) {
+    setErr(null);
+    setInviteTarget(sailor);
+    setInviteOpen(true);
+  }
+
+  async function submitInvite({ eventId, preferredRole, note }) {
+    if (!inviteTarget?.id) return;
+    setInviteBusy(true);
+    setErr(null);
+    try {
+      await ownerInviteSailor({
+        eventId,
+        sailorId: inviteTarget.id,
+        preferredRole,
+        note,
+      });
+      setInviteOpen(false);
+      setInviteTarget(null);
+      alert("Invite sent ✅");
+    } catch (e) {
+      setErr(e.message ?? String(e));
+    } finally {
+      setInviteBusy(false);
+    }
+  }
 
   return (
     <div style={{ marginTop: 24, border: "1px solid #eee", borderRadius: 12, padding: 14 }}>
@@ -74,7 +127,7 @@ export default function Discovery({ profileType }) {
       </div>
 
       <div style={{ fontSize: 12, opacity: 0.75, marginTop: 8 }}>
-        Find sailors by name, role, and availability. (Invites next.)
+        Find sailors by name, role, and availability. Owners can invite sailors to an event.
       </div>
 
       {err && <div style={{ color: "crimson", marginTop: 10 }}>{err}</div>}
@@ -108,7 +161,7 @@ export default function Discovery({ profileType }) {
 
         {profileType === "owner" && (
           <span style={{ fontSize: 12, opacity: 0.75 }}>
-            Owners: invitations coming next.
+            {events.length ? "Invite enabled." : "Create an event to invite sailors."}
           </span>
         )}
       </div>
@@ -122,6 +175,7 @@ export default function Discovery({ profileType }) {
               <th>Location</th>
               <th>Roles</th>
               <th>Available</th>
+              {profileType === "owner" && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -133,12 +187,24 @@ export default function Discovery({ profileType }) {
                   {safeArr(p.roles).length ? safeArr(p.roles).map((r) => <Pill key={r}>{r}</Pill>) : "—"}
                 </td>
                 <td>{p.is_available ? "✅" : "—"}</td>
+
+                {profileType === "owner" && (
+                  <td>
+                    <button
+                      disabled={!events.length}
+                      onClick={() => openInvite(p)}
+                      title={!events.length ? "Create an event first" : "Invite to event"}
+                    >
+                      Invite
+                    </button>
+                  </td>
+                )}
               </tr>
             ))}
 
             {!rows.length && (
               <tr>
-                <td colSpan="4" style={{ opacity: 0.7, paddingTop: 12 }}>
+                <td colSpan={profileType === "owner" ? 5 : 4} style={{ opacity: 0.7, paddingTop: 12 }}>
                   No sailors found for these filters.
                 </td>
               </tr>
@@ -147,9 +213,18 @@ export default function Discovery({ profileType }) {
         </table>
       </div>
 
-      <div style={{ marginTop: 10, fontSize: 12, opacity: 0.75 }}>
-        Next: owner can invite sailor to an event → creates an application.
-      </div>
+      <InviteModal
+        isOpen={inviteOpen}
+        onClose={() => {
+          if (inviteBusy) return;
+          setInviteOpen(false);
+          setInviteTarget(null);
+        }}
+        onSubmit={submitInvite}
+        busy={inviteBusy}
+        sailor={inviteTarget}
+        events={events}
+      />
     </div>
   );
 }
