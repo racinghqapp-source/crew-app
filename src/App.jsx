@@ -1,24 +1,25 @@
+// src/App.jsx
 import { useEffect, useState } from "react";
 import "./App.css";
 
 import { supabase } from "./lib/supabase";
 import { useSession } from "./hooks/useSession";
 import { ensureProfile } from "./api/profile";
+
 import Login from "./pages/Login";
-
 import MyParticipations from "./pages/MyParticipations";
-import ReputationCard from "./components/ReputationCard";
 import OwnerApplicants from "./pages/OwnerApplicants";
-
+import Upgrade from "./pages/Upgrade";
 
 export default function App() {
   const { user, loading } = useSession();
-  const [profile, setProfile] = useState(null);
-  const [bootErr, setBootErr] = useState(null);
-  const [booting, setBooting] = useState(false);
 
-  // ✅ bump this to force ReputationCard refresh after rating submit
-  const [repBump, setRepBump] = useState(0);
+  const [profile, setProfile] = useState(null);
+  const [booting, setBooting] = useState(false);
+  const [bootErr, setBootErr] = useState(null);
+
+  // used to force re-fetch after upgrade
+  const [planBump, setPlanBump] = useState(0);
 
   useEffect(() => {
     let mounted = true;
@@ -46,17 +47,26 @@ export default function App() {
     return () => {
       mounted = false;
     };
-  }, [user?.id]);
+  }, [user?.id, planBump]);
 
   async function signOut() {
     await supabase.auth.signOut();
     setProfile(null);
   }
 
-  if (loading) return <div style={{ padding: 16 }}>Loading session…</div>;
-  if (!user) return <Login />;
+  // ---------- RENDER STATES ----------
 
-  if (booting) return <div style={{ padding: 16 }}>Setting up your profile…</div>;
+  if (loading) {
+    return <div style={{ padding: 16 }}>Loading session…</div>;
+  }
+
+  if (!user) {
+    return <Login />;
+  }
+
+  if (booting) {
+    return <div style={{ padding: 16 }}>Setting up your profile…</div>;
+  }
 
   if (bootErr) {
     return (
@@ -73,8 +83,11 @@ export default function App() {
     );
   }
 
+  // ---------- MAIN APP ----------
+
   return (
-    <div style={{ padding: 16 }}>
+    <div style={{ padding: 16, maxWidth: 1100, margin: "0 auto" }}>
+      {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h2 style={{ margin: 0 }}>Crew App</h2>
@@ -87,8 +100,9 @@ export default function App() {
 
       <hr style={{ margin: "16px 0" }} />
 
+      {/* Profile */}
       <h3 style={{ marginTop: 0 }}>Profile</h3>
-      <div>
+      <div style={{ lineHeight: "1.6" }}>
         <div>
           <b>Name:</b> {profile?.display_name}
         </div>
@@ -96,20 +110,31 @@ export default function App() {
           <b>Type:</b> {profile?.profile_type}
         </div>
         <div>
+          <b>Plan:</b> {(profile?.plan_tier ?? "free").toUpperCase()}
+        </div>
+        <div>
           <b>User ID:</b> {profile?.id}
         </div>
       </div>
 
-      {/* ✅ Reputation is refreshed when repBump changes */}
-      <ReputationCard userId={user.id} bump={repBump} />
+      {/* Upgrade */}
+      <Upgrade
+        userId={user.id}
+        planTier={profile?.plan_tier}
+        onUpgraded={() => setPlanBump((n) => n + 1)}
+      />
 
-      {/* ✅ Tell App when a rating is submitted so it refreshes reputation */}
-      <MyParticipations onRated={() => setRepBump((n) => n + 1)} />
+      {/* Participations */}
+      <MyParticipations />
 
-      <OwnerApplicants profileType={profile?.profile_type} />
+      {/* Owner view */}
+      <OwnerApplicants
+        profileType={profile?.profile_type}
+        planTier={profile?.plan_tier}
+      />
 
-      <div style={{ marginTop: 16, fontSize: 12, opacity: 0.75 }}>
-        Next: Participations → Confirm → Rate → Reputation updates.
+      <div style={{ marginTop: 24, fontSize: 12, opacity: 0.7 }}>
+        Next: Discovery → Invitations → Crew reputation network.
       </div>
     </div>
   );
