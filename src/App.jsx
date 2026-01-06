@@ -8,6 +8,8 @@ import Login from "./pages/Login";
 
 import MyParticipations from "./pages/MyParticipations";
 import ReputationCard from "./components/ReputationCard";
+import OwnerApplicants from "./pages/OwnerApplicants";
+
 
 export default function App() {
   const { user, loading } = useSession();
@@ -103,6 +105,8 @@ export default function App() {
 
       {/* ✅ Tell App when a rating is submitted so it refreshes reputation */}
       <MyParticipations onRated={() => setRepBump((n) => n + 1)} />
+
+      <OwnerApplicants profileType={profile?.profile_type} />
 
       <div style={{ marginTop: 16, fontSize: 12, opacity: 0.75 }}>
         Next: Participations → Confirm → Rate → Reputation updates.
