@@ -6,6 +6,8 @@ import { useSession } from "./hooks/useSession";
 import { ensureProfile } from "./api/profile";
 import Login from "./pages/Login";
 
+import MyParticipations from "./pages/MyParticipations";
+
 export default function App() {
   const { user, loading } = useSession();
   const [profile, setProfile] = useState(null);
@@ -85,6 +87,9 @@ export default function App() {
         <div><b>Type:</b> {profile?.profile_type}</div>
         <div><b>User ID:</b> {profile?.id}</div>
       </div>
+
+      {/* ✅ Render participations inside the returned JSX */}
+      <MyParticipations />
 
       <div style={{ marginTop: 16, fontSize: 12, opacity: 0.75 }}>
         Next: Participations → Confirm → Rate → Reputation updates.
