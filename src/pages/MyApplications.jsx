@@ -1,178 +1,66 @@
 // src/pages/MyApplications.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "../hooks/useSession";
-import { acceptApplication, declineApplication, fetchMyApplications } from "../api/myApplications";
+import { fetchMyApplications, withdrawApplication } from "../api/applications";
 
-function statusLabel(s) {
-  const v = String(s || "").toLowerCase();
-  if (v === "invited") return "Invite";
-  if (v === "pending") return "Pending";
-  if (v === "accepted") return "Accepted";
-  if (v === "declined") return "Declined";
-  return s || "—";
+function Badge({ tone = "muted", children }) {
+  const cls =
+    tone === "green"
+      ? "badge badgeGreen"
+      : tone === "orange"
+      ? "badge badgeOrange"
+      : tone === "red"
+      ? "badge badgeRed"
+      : tone === "blue"
+      ? "badge badgeBlue"
+      : "badge badgeMuted";
+  return <span className={cls}>{children}</span>;
 }
 
-function statusTone(s) {
-  const v = String(s || "").toLowerCase();
-  if (v === "invited") return { bg: "#ecfeff", border: "#a5f3fc", text: "#155e75" }; // cyan-ish
-  if (v === "pending") return { bg: "#fef9c3", border: "#fde68a", text: "#854d0e" }; // amber-ish
-  if (v === "accepted") return { bg: "#dcfce7", border: "#86efac", text: "#166534" }; // green-ish
-  if (v === "declined") return { bg: "#fee2e2", border: "#fecaca", text: "#991b1b" }; // red-ish
-  return { bg: "#f3f4f6", border: "#e5e7eb", text: "#374151" };
+function statusTone(status) {
+  switch (status) {
+    case "accepted":
+      return "green";
+    case "shortlisted":
+      return "blue";
+    case "applied":
+      return "orange";
+    case "declined":
+    case "withdrawn":
+      return "red";
+    default:
+      return "muted";
+  }
 }
 
-function Chip({ children, tone }) {
-  const t = tone || { bg: "#f3f4f6", border: "#e5e7eb", text: "#374151" };
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        padding: "4px 10px",
-        borderRadius: 999,
-        border: `1px solid ${t.border}`,
-        background: t.bg,
-        color: t.text,
-        fontSize: 12,
-        fontWeight: 600,
-        whiteSpace: "nowrap",
-      }}
-    >
-      {children}
-    </span>
-  );
+function prettyStatus(status) {
+  if (!status) return "Unknown";
+  return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
-function Card({ children }) {
-  return (
-    <div
-      style={{
-        border: "1px solid #eee",
-        borderRadius: 14,
-        padding: 14,
-        background: "white",
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-function PrimaryButton({ children, ...props }) {
-  return (
-    <button
-      {...props}
-      style={{
-        padding: "10px 14px",
-        borderRadius: 10,
-        border: "1px solid #0b2440",
-        background: "#0b2440",
-        color: "white",
-        fontWeight: 700,
-        cursor: props.disabled ? "not-allowed" : "pointer",
-        opacity: props.disabled ? 0.6 : 1,
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-function SecondaryButton({ children, ...props }) {
-  return (
-    <button
-      {...props}
-      style={{
-        padding: "10px 14px",
-        borderRadius: 10,
-        border: "1px solid #ddd",
-        background: "white",
-        color: "#111827",
-        fontWeight: 600,
-        cursor: props.disabled ? "not-allowed" : "pointer",
-        opacity: props.disabled ? 0.6 : 1,
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-function formatWhen(r) {
-  const date = r.event_start_date ? String(r.event_start_date) : null;
-  const loc = r.event_location_text ? String(r.event_location_text) : null;
-  if (date && loc) return `${date} • ${loc}`;
-  return date || loc || "—";
-}
-
-function InviteCard({ r, busy, onAccept, onDecline }) {
-  const tone = statusTone(r.status);
-  const canAct = ["invited", "pending"].includes(String(r.status || "").toLowerCase());
-
-  return (
-    <Card>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#0b2440" }}>
-              {r.event_title ?? "Untitled event"}
-            </div>
-            <Chip tone={tone}>{statusLabel(r.status)}</Chip>
-          </div>
-
-          <div style={{ marginTop: 6, fontSize: 13, opacity: 0.8 }}>
-            {formatWhen(r)}
-          </div>
-
-          <div style={{ marginTop: 10, fontSize: 13 }}>
-            <div>
-              From <b>{r.owner_display_name ?? String(r.owner_id).slice(0, 8)}</b>
-              {r.preferred_role ? (
-                <>
-                  {" "}
-                  • Role: <b>{r.preferred_role}</b>
-                </>
-              ) : null}
-            </div>
-
-            {r.note ? (
-              <div style={{ marginTop: 8, padding: 10, borderRadius: 10, background: "#f9fafb" }}>
-                <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 4 }}>Message</div>
-                <div style={{ whiteSpace: "pre-wrap" }}>{r.note}</div>
-              </div>
-            ) : null}
-          </div>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 160 }}>
-          <PrimaryButton disabled={!canAct || busy} onClick={onAccept}>
-            {busy ? "Working…" : "Accept"}
-          </PrimaryButton>
-          <SecondaryButton disabled={!canAct || busy} onClick={onDecline}>
-            Decline
-          </SecondaryButton>
-        </div>
-      </div>
-    </Card>
-  );
+function fmtDate(d) {
+  if (!d) return "";
+  try {
+    return new Date(d).toLocaleDateString();
+  } catch {
+    return String(d);
+  }
 }
 
 export default function MyApplications() {
   const { user } = useSession();
 
   const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState(null);
-
-  const [showDeclined, setShowDeclined] = useState(false);
 
   async function load() {
     if (!user?.id) return;
     setErr(null);
     setLoading(true);
     try {
-      const data = await fetchMyApplications();
+      const data = await fetchMyApplications(user.id);
       setRows(data);
     } catch (e) {
       setErr(e.message ?? String(e));
@@ -182,31 +70,31 @@ export default function MyApplications() {
   }
 
   useEffect(() => {
-    if (user?.id) load();
+    load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  const { actionRequired, accepted, declined, other } = useMemo(() => {
-    const a = [];
-    const ac = [];
-    const d = [];
-    const o = [];
+  const groups = useMemo(() => {
+    const applied = [];
+    const shortlisted = [];
+    const accepted = [];
+    const closed = [];
 
     for (const r of rows) {
-      const s = String(r.status || "").toLowerCase();
-      if (s === "invited" || s === "pending") a.push(r);
-      else if (s === "accepted") ac.push(r);
-      else if (s === "declined") d.push(r);
-      else o.push(r);
+      if (r.status === "accepted") accepted.push(r);
+      else if (r.status === "shortlisted") shortlisted.push(r);
+      else if (r.status === "applied") applied.push(r);
+      else closed.push(r);
     }
-    return { actionRequired: a, accepted: ac, declined: d, other: o };
+    return { applied, shortlisted, accepted, closed };
   }, [rows]);
 
-  async function onAccept(id) {
-    setBusyId(id);
+  async function onWithdraw(appId) {
+    if (!user?.id) return;
+    setBusyId(appId);
     setErr(null);
     try {
-      await acceptApplication(id);
+      await withdrawApplication({ userId: user.id, applicationId: appId });
       await load();
     } catch (e) {
       setErr(e.message ?? String(e));
@@ -215,128 +103,127 @@ export default function MyApplications() {
     }
   }
 
-  async function onDecline(id) {
-    setBusyId(id);
-    setErr(null);
-    try {
-      await declineApplication(id);
-      await load();
-    } catch (e) {
-      setErr(e.message ?? String(e));
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  if (!user) return null;
+  if (loading) return <div className="card">Loading applications…</div>;
 
   return (
-    <div style={{ marginTop: 12 }}>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-        <div>
-          <h3 style={{ margin: 0 }}>Applications</h3>
-          <div style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
-            Your invites and applications. Action-required items stay on top.
-          </div>
-        </div>
-
-        <button onClick={load} disabled={loading} style={{ padding: "8px 12px", borderRadius: 10 }}>
-          {loading ? "Refreshing…" : "Refresh"}
-        </button>
-      </div>
-
-      {err && <div style={{ color: "crimson", marginTop: 12 }}>{err}</div>}
-
-      {/* Action Required */}
-      <div style={{ marginTop: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <h4 style={{ margin: 0 }}>Action required</h4>
-          <Chip tone={actionRequired.length ? statusTone("pending") : statusTone("accepted")}>
-            {actionRequired.length} items
-          </Chip>
-        </div>
-
-        <div style={{ marginTop: 10, display: "grid", gap: 12 }}>
-          {actionRequired.map((r) => (
-            <InviteCard
-              key={r.application_id}
-              r={r}
-              busy={busyId === r.application_id}
-              onAccept={() => onAccept(r.application_id)}
-              onDecline={() => onDecline(r.application_id)}
-            />
-          ))}
-
-          {!actionRequired.length && (
-            <div style={{ opacity: 0.75, padding: 14, border: "1px dashed #ddd", borderRadius: 12 }}>
-              Nothing waiting on you right now ✅
+    <div style={{ display: "grid", gap: 12 }}>
+      <div className="card">
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+          <div>
+            <h2 style={{ margin: 0 }}>My Applications</h2>
+            <div className="subtle" style={{ marginTop: 6 }}>
+              Track invitations and applications. Withdraw if plans change.
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Accepted */}
-      {!!accepted.length && (
-        <div style={{ marginTop: 18 }}>
-          <h4 style={{ margin: 0 }}>Accepted</h4>
-          <div style={{ marginTop: 10, display: "grid", gap: 12 }}>
-            {accepted.map((r) => (
-              <InviteCard
-                key={r.application_id}
-                r={r}
-                busy={busyId === r.application_id}
-                onAccept={() => {}}
-                onDecline={() => {}}
-              />
-            ))}
           </div>
-        </div>
-      )}
-
-      {/* Other statuses (future-proof) */}
-      {!!other.length && (
-        <div style={{ marginTop: 18 }}>
-          <h4 style={{ margin: 0 }}>Other</h4>
-          <div style={{ marginTop: 10, display: "grid", gap: 12 }}>
-            {other.map((r) => (
-              <InviteCard
-                key={r.application_id}
-                r={r}
-                busy={busyId === r.application_id}
-                onAccept={() => {}}
-                onDecline={() => {}}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Declined (collapsed) */}
-      {!!declined.length && (
-        <div style={{ marginTop: 18 }}>
-          <button
-            onClick={() => setShowDeclined((v) => !v)}
-            style={{ padding: "8px 12px", borderRadius: 10, border: "1px solid #ddd", background: "white" }}
-          >
-            {showDeclined ? "Hide" : "Show"} declined ({declined.length})
+          <button className="btn btnGhost" onClick={load}>
+            Refresh
           </button>
-
-          {showDeclined && (
-            <div style={{ marginTop: 10, display: "grid", gap: 12 }}>
-              {declined.map((r) => (
-                <InviteCard
-                  key={r.application_id}
-                  r={r}
-                  busy={busyId === r.application_id}
-                  onAccept={() => {}}
-                  onDecline={() => {}}
-                />
-              ))}
-            </div>
-          )}
         </div>
+
+        {err ? (
+          <div style={{ marginTop: 12, color: "crimson" }}>
+            {err}
+            <div className="subtle" style={{ marginTop: 6 }}>
+              If this is an RLS error, your applications select policy isn’t allowing reads.
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {rows.length === 0 ? (
+        <div className="card">
+          <div style={{ fontWeight: 600 }}>No applications yet</div>
+          <div className="subtle" style={{ marginTop: 6 }}>
+            Head to Discover and apply to an event that suits you.
+          </div>
+        </div>
+      ) : (
+        <>
+          <Section title="Applied" items={groups.applied} busyId={busyId} onWithdraw={onWithdraw} />
+          <Section
+            title="Shortlisted"
+            items={groups.shortlisted}
+            busyId={busyId}
+            onWithdraw={onWithdraw}
+          />
+          <Section title="Accepted" items={groups.accepted} busyId={busyId} onWithdraw={onWithdraw} />
+          <Section title="Closed" items={groups.closed} busyId={busyId} onWithdraw={onWithdraw} />
+        </>
       )}
     </div>
   );
+
+  function Section({ title, items, busyId, onWithdraw }) {
+    if (!items?.length) return null;
+
+    return (
+      <div className="card">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontWeight: 700 }}>{title}</div>
+          <div className="subtle">{items.length}</div>
+        </div>
+
+        <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
+          {items.map((r) => {
+            const e = r.event;
+            const canWithdraw = r.status === "applied" || r.status === "shortlisted";
+            return (
+              <div
+                key={r.id}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr auto",
+                  gap: 12,
+                  padding: 12,
+                  border: "1px solid rgba(0,0,0,0.08)",
+                  borderRadius: 12,
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                    <div style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {e?.title ?? "Event"}
+                    </div>
+                    <Badge tone={statusTone(r.status)}>{prettyStatus(r.status)}</Badge>
+                    {e?.status ? <Badge tone="muted">{String(e.status)}</Badge> : null}
+                  </div>
+
+                  <div className="subtle" style={{ marginTop: 6 }}>
+                    {e?.boat?.name ? <span>{e.boat.name} • </span> : null}
+                    {e?.location_text ? <span>{e.location_text} • </span> : null}
+                    {e?.start_date ? <span>{fmtDate(e.start_date)}</span> : null}
+                    {e?.end_date ? <span> – {fmtDate(e.end_date)}</span> : null}
+                  </div>
+
+                  <div className="subtle" style={{ marginTop: 6 }}>
+                    {r.preferred_role ? (
+                      <>
+                        Preferred role: <b>{r.preferred_role}</b> •{" "}
+                      </>
+                    ) : null}
+                    Applied: {fmtDate(r.created_at)}
+                  </div>
+
+                  {r.note ? <div style={{ marginTop: 8, fontSize: 13, opacity: 0.85 }}>{r.note}</div> : null}
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {canWithdraw ? (
+                    <button
+                      className="btn btnGhost"
+                      disabled={busyId === r.id}
+                      onClick={() => onWithdraw(r.id)}
+                      title="Withdraw application"
+                    >
+                      {busyId === r.id ? "Withdrawing…" : "Withdraw"}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 }

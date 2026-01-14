@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 
-export default function Login() {
+export default function Login({ onCreateAccount }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -53,7 +53,20 @@ export default function Login() {
       </form>
 
       <div style={{ marginTop: 12, fontSize: 12, opacity: 0.8 }}>
-        For now: create users in Supabase Auth and sign in here.
+        <button
+          type="button"
+          onClick={onCreateAccount}
+          style={{
+            padding: 0,
+            border: "none",
+            background: "none",
+            color: "#0b2440",
+            cursor: "pointer",
+            textDecoration: "underline",
+          }}
+        >
+          Create account
+        </button>
       </div>
     </div>
   );

@@ -21,3 +21,11 @@ export async function declineApplication(applicationId) {
   });
   if (error) throw error;
 }
+
+export async function withdrawApplication(applicationId) {
+  const { error } = await supabase.rpc("sailor_set_application_status", {
+    p_application_id: applicationId,
+    p_status: "withdrawn",
+  });
+  if (error) throw error;
+}

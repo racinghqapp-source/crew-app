@@ -12,6 +12,12 @@ export async function fetchMyEvents(ownerId) {
   return data ?? [];
 }
 
+export async function ownerGetMyEvents() {
+  const { data, error } = await supabase.rpc("owner_get_my_events");
+  if (error) throw error;
+  return data ?? [];
+}
+
 // ✅ Free tier: applicants + display_name only (no trust metrics)
 export async function fetchApplicantsBasic(eventId) {
   const { data, error } = await supabase.rpc("owner_get_event_applicants_basic", {

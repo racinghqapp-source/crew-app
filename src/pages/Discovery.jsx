@@ -1,60 +1,61 @@
+// src/pages/Discovery.jsx
 import { useEffect, useMemo, useState } from "react";
-import { fetchDiscoverProfiles } from "../api/discovery";
-import { fetchMyEvents } from "../api/owner";
-import { ownerInviteSailor } from "../api/invites";
 import { useSession } from "../hooks/useSession";
-import InviteModal from "../components/InviteModal";
+import { fetchPublishedEvents } from "../api/events";
+import { fetchMyApplications } from "../api/applications";
 
-function safeArr(v) {
-  return Array.isArray(v) ? v : [];
+// --- existing owner mock (leave for now) ---
+const mockCrew = [
+  { id: 1, name: "Alex Morgan", experience: "Offshore · Bow", availability: "available" },
+  { id: 2, name: "Jamie Lee", experience: "Inshore · Trim", availability: "unavailable" },
+  { id: 3, name: "Chris Nolan", experience: "Navigator", availability: "unknown" },
+];
+
+function Badge({ tone = "muted", children }) {
+  const cls =
+    tone === "green"
+      ? "badge badgeGreen"
+      : tone === "orange"
+      ? "badge badgeOrange"
+      : tone === "red"
+      ? "badge badgeRed"
+      : tone === "blue"
+      ? "badge badgeBlue"
+      : "badge badgeMuted";
+  return <span className={cls}>{children}</span>;
 }
 
-function Pill({ children }) {
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "3px 8px",
-        borderRadius: 999,
-        background: "#f3f4f6",
-        fontSize: 12,
-        marginRight: 6,
-        marginBottom: 6,
-      }}
-    >
-      {children}
-    </span>
-  );
+function fmtDate(d) {
+  if (!d) return "";
+  try {
+    return new Date(d).toLocaleDateString();
+  } catch {
+    return String(d);
+  }
 }
 
-export default function Discovery({ profileType }) {
+function canActAsSailor(profileType) {
+  return profileType === "sailor" || profileType === "both";
+}
+
+export default function Discovery({ profileType, profile, onOpenEvent }) {
   const { user } = useSession();
 
-  const [search, setSearch] = useState("");
-  const [role, setRole] = useState("");
-  const [availableOnly, setAvailableOnly] = useState(false);
-
-  const [rows, setRows] = useState([]);
-  const [err, setErr] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  // Owner invite state
+  // ----- Sailor: events -----
   const [events, setEvents] = useState([]);
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteTarget, setInviteTarget] = useState(null);
-  const [inviteBusy, setInviteBusy] = useState(false);
+  const [myApps, setMyApps] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState(null);
 
-  async function load() {
+
+  async function loadSailorData() {
+    if (!user?.id) return;
     setErr(null);
     setLoading(true);
     try {
-      const data = await fetchDiscoverProfiles({
-        search,
-        role,
-        availableOnly,
-        type: "sailor",
-      });
-      setRows(data);
+      const [ev, apps] = await Promise.all([fetchPublishedEvents(), fetchMyApplications(user.id)]);
+      setEvents(ev);
+      setMyApps(apps);
     } catch (e) {
       setErr(e.message ?? String(e));
     } finally {
@@ -62,169 +63,220 @@ export default function Discovery({ profileType }) {
     }
   }
 
-  async function loadOwnerEvents() {
-    if (!user?.id) return;
-    try {
-      const data = await fetchMyEvents(user.id);
-      setEvents(data);
-    } catch {
-      // ignore; owner may have no events or no access
-    }
-  }
-
   useEffect(() => {
-    load();
+    if (!canActAsSailor(profileType)) return;
+    loadSailorData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, role, availableOnly]);
-
-  useEffect(() => {
-    if (profileType === "owner") loadOwnerEvents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileType, user?.id]);
+  }, [user?.id, profileType]);
 
-  const allRoles = useMemo(() => {
-    const set = new Set();
-    for (const r of rows) {
-      for (const x of safeArr(r.roles)) set.add(String(x));
-    }
-    return Array.from(set).sort();
-  }, [rows]);
+  const myAppByEventId = useMemo(() => {
+    const m = new Map();
+    for (const a of myApps) m.set(a.event?.id ?? a.event_id, a);
+    return m;
+  }, [myApps]);
 
-  function openInvite(sailor) {
-    setErr(null);
-    setInviteTarget(sailor);
-    setInviteOpen(true);
+  // ----- Owner: crew mock (existing) -----
+  const [filter, setFilter] = useState("all");
+  const crew = mockCrew.filter((c) => {
+    if (filter === "available") return c.availability === "available";
+    if (filter === "unavailable") return c.availability === "unavailable";
+    return true;
+  });
+
+  function availabilityBadge(avail) {
+    if (avail === "available") return "badge badgeGreen";
+    if (avail === "unavailable") return "badge badgeRed";
+    return "badge badgeMuted";
   }
 
-  async function submitInvite({ eventId, preferredRole, note }) {
-    if (!inviteTarget?.id) return;
-    setInviteBusy(true);
-    setErr(null);
-    try {
-      await ownerInviteSailor({
-        eventId,
-        sailorId: inviteTarget.id,
-        preferredRole,
-        note,
-      });
-      setInviteOpen(false);
-      setInviteTarget(null);
-      alert("Invite sent ✅");
-    } catch (e) {
-      setErr(e.message ?? String(e));
-    } finally {
-      setInviteBusy(false);
-    }
-  }
+  // =========================
+  // Render: sailor discovery
+  // =========================
+  if (canActAsSailor(profileType)) {
+    return (
+      <div style={{ display: "grid", gap: 12 }}>
+        <div className="card">
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 16 }}>Event Discovery</div>
+              <div className="subtle">Browse published events and apply in one click.</div>
+            </div>
+            <button className="btn btnGhost" onClick={loadSailorData} disabled={loading}>
+              {loading ? "Refreshing…" : "Refresh"}
+            </button>
+          </div>
 
-  return (
-    <div style={{ marginTop: 24, border: "1px solid #eee", borderRadius: 12, padding: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-        <h3 style={{ margin: 0 }}>Discovery</h3>
-        <button onClick={load} disabled={loading}>
-          {loading ? "Loading…" : "Refresh"}
-        </button>
-      </div>
+          {err ? (
+            <div style={{ marginTop: 12, color: "crimson" }}>
+              {err}
+              <div className="subtle" style={{ marginTop: 6 }}>
+                If this is an RLS error, confirm you can select from <b>events</b> and{" "}
+                <b>applications</b>.
+              </div>
+            </div>
+          ) : null}
+        </div>
 
-      <div style={{ fontSize: 12, opacity: 0.75, marginTop: 8 }}>
-        Find sailors by name, role, and availability. Owners can invite sailors to an event.
-      </div>
+        {loading ? (
+          <div className="card">Loading events…</div>
+        ) : events.length === 0 ? (
+          <div className="card">
+            <div style={{ fontWeight: 700 }}>No published events yet</div>
+            <div className="subtle" style={{ marginTop: 6 }}>
+              Check back soon — skippers will publish events here.
+            </div>
+          </div>
+        ) : (
+          <div className="card">
+            <div style={{ display: "grid", gap: 10 }}>
+              {events.map((e) => {
+                const existingApp = myAppByEventId.get(e.id);
+                const alreadyApplied = Boolean(existingApp);
+                const appStatus = existingApp?.status;
 
-      {err && <div style={{ color: "crimson", marginTop: 10 }}>{err}</div>}
+                const crewFilled = Number(e.crew_filled ?? 0);
+                const crewReq = Number(e.crew_required ?? 0);
+                const full = crewReq > 0 && crewFilled >= crewReq;
 
-      {/* Filters */}
-      <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search name…"
-          style={{ padding: 10, minWidth: 220 }}
-        />
+                return (
+                  <div
+                    key={e.id}
+                    onClick={() => onOpenEvent?.(e.id)}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr auto",
+                      gap: 12,
+                      padding: 12,
+                      border: "1px solid rgba(0,0,0,0.08)",
+                      borderRadius: 12,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                        <div style={{ fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {e.title || "Untitled event"}
+                        </div>
+                        <Badge tone="muted">{e.event_type || "Event"}</Badge>
+                        {full ? <Badge tone="red">Full</Badge> : <Badge tone="green">Open</Badge>}
+                        {alreadyApplied ? (
+                          <span
+                            className="badge badgeGreen"
+                            style={{
+                              padding: "4px 10px",
+                              borderRadius: 999,
+                              fontWeight: 800,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.04em",
+                            }}
+                          >
+                            Applied
+                          </span>
+                        ) : null}
+                      </div>
 
-        <select value={role} onChange={(e) => setRole(e.target.value)} style={{ padding: 10, minWidth: 200 }}>
-          <option value="">All roles</option>
-          {allRoles.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
+                      <div className="subtle" style={{ marginTop: 6 }}>
+                        {e.boat?.name ? <span>{e.boat.name} • </span> : null}
+                        {e.location_text ? <span>{e.location_text} • </span> : null}
+                        {e.start_date ? <span>{fmtDate(e.start_date)}</span> : null}
+                        {e.end_date ? <span> – {fmtDate(e.end_date)}</span> : null}
+                      </div>
 
-        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-          <input
-            type="checkbox"
-            checked={availableOnly}
-            onChange={(e) => setAvailableOnly(e.target.checked)}
-          />
-          Available only
-        </label>
+                      <div className="subtle" style={{ marginTop: 6 }}>
+                        Crew: <b>{crewFilled}</b> / <b>{crewReq || "?"}</b>
+                        {e.paid ? <> • <b>Paid</b></> : null}
+                        {e.accommodation_provided ? <> • Accommodation</> : null}
+                      </div>
 
-        {profileType === "owner" && (
-          <span style={{ fontSize: 12, opacity: 0.75 }}>
-            {events.length ? "Invite enabled." : "Create an event to invite sailors."}
-          </span>
+                      {e.compensation_notes ? (
+                        <div style={{ marginTop: 8, fontSize: 13, opacity: 0.85 }}>
+                          {e.compensation_notes}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
+
       </div>
+    );
+  }
 
-      {/* Results */}
-      <div style={{ marginTop: 14 }}>
-        <table width="100%" cellPadding="8" style={{ borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>
-              <th>Name</th>
-              <th>Location</th>
-              <th>Roles</th>
-              <th>Available</th>
-              {profileType === "owner" && <th>Actions</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((p) => (
-              <tr key={p.id} style={{ borderBottom: "1px solid #eee" }}>
-                <td><b>{p.display_name ?? "—"}</b></td>
-                <td>{p.location_text ?? "—"}</td>
-                <td>
-                  {safeArr(p.roles).length ? safeArr(p.roles).map((r) => <Pill key={r}>{r}</Pill>) : "—"}
-                </td>
-                <td>{p.is_available ? "✅" : "—"}</td>
-
-                {profileType === "owner" && (
-                  <td>
-                    <button
-                      disabled={!events.length}
-                      onClick={() => openInvite(p)}
-                      title={!events.length ? "Create an event first" : "Invite to event"}
-                    >
-                      Invite
-                    </button>
-                  </td>
-                )}
-              </tr>
-            ))}
-
-            {!rows.length && (
-              <tr>
-                <td colSpan={profileType === "owner" ? 5 : 4} style={{ opacity: 0.7, paddingTop: 12 }}>
-                  No sailors found for these filters.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <InviteModal
-        isOpen={inviteOpen}
-        onClose={() => {
-          if (inviteBusy) return;
-          setInviteOpen(false);
-          setInviteTarget(null);
+  // =========================
+  // Render: owner discovery (existing mock)
+  // =========================
+  return (
+    <div className="card">
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 12,
         }}
-        onSubmit={submitInvite}
-        busy={inviteBusy}
-        sailor={inviteTarget}
-        events={events}
-      />
+      >
+        <div>
+          <div style={{ fontWeight: 700 }}>Crew Discovery</div>
+          <div className="subtle">Find and invite crew for upcoming events</div>
+        </div>
+
+        <div style={{ display: "flex", gap: 6 }}>
+          <button
+            className={`btn btnSmall ${filter === "all" ? "btnPrimary" : "btnGhost"}`}
+            onClick={() => setFilter("all")}
+          >
+            All
+          </button>
+          <button
+            className={`btn btnSmall ${filter === "available" ? "btnPrimary" : "btnGhost"}`}
+            onClick={() => setFilter("available")}
+          >
+            Available
+          </button>
+          <button
+            className={`btn btnSmall ${filter === "unavailable" ? "btnPrimary" : "btnGhost"}`}
+            onClick={() => setFilter("unavailable")}
+          >
+            Unavailable
+          </button>
+        </div>
+      </div>
+
+      {crew.length === 0 ? (
+        <div className="alert">No crew match this filter.</div>
+      ) : (
+        <div style={{ display: "grid", gap: 8 }}>
+          {crew.map((c) => (
+            <div
+              key={c.id}
+              className="card"
+              style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+            >
+              <div>
+                <div style={{ fontWeight: 600 }}>{c.name}</div>
+                <div className="subtle">{c.experience}</div>
+              </div>
+
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <span className={availabilityBadge(c.availability)}>
+                  {c.availability === "available"
+                    ? "Available"
+                    : c.availability === "unavailable"
+                    ? "Unavailable"
+                    : "No response"}
+                </span>
+                <button className="btn btnSmall">Invite</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

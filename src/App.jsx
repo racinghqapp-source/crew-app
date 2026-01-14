@@ -4,16 +4,26 @@ import "./App.css";
 
 import { supabase } from "./lib/supabase";
 import { useSession } from "./hooks/useSession";
-import { ensureProfile } from "./api/profile";
+import { ensureProfile, needsSailorOnboarding } from "./api/profile";
+import { fetchUnreadInviteCount } from "./api/inbox";
+import { ROUTES } from "./routes";
 
 import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
+import Nav from "./components/Nav";
+
 import Discovery from "./pages/Discovery";
 import MyApplications from "./pages/MyApplications";
 import MyParticipations from "./pages/MyParticipations";
-import OwnerApplicants from "./pages/OwnerApplicants";
 import Upgrade from "./pages/Upgrade";
-
-import Nav from "./components/Nav";
+import MyBoats from "./pages/MyBoats";
+import OwnerInvites from "./pages/OwnerInvites";
+import Events from "./pages/Events";
+import EventCrewBoard from "./pages/EventCrewBoard";
+import CreateEvent from "./pages/CreateEvent";
+import Profile from "./pages/Profile";
+import EventDetails from "./pages/EventDetails";
+import Inbox from "./pages/Inbox";
 
 export default function App() {
   const { user, loading } = useSession();
@@ -22,15 +32,17 @@ export default function App() {
   const [booting, setBooting] = useState(false);
   const [bootErr, setBootErr] = useState(null);
 
-  // used to force re-fetch after upgrade
+  const [page, setPage] = useState(ROUTES.LOGIN);
+  const [selectedEventId, setSelectedEventId] = useState("");
   const [planBump, setPlanBump] = useState(0);
+  const [unreadInvites, setUnreadInvites] = useState(0);
 
-  // UI state
-  const [page, setPage] = useState("discover");
-  const [showProfile, setShowProfile] = useState(false);
+  const isOwner = useMemo(() => {
+    const t = profile?.profile_type;
+    return t === "owner" || t === "both";
+  }, [profile?.profile_type]);
 
-  const isOwner = useMemo(() => profile?.profile_type === "owner", [profile?.profile_type]);
-
+  // Boot profile (creates/ensures profile row exists)
   useEffect(() => {
     let mounted = true;
 
@@ -45,13 +57,6 @@ export default function App() {
         const p = await ensureProfile({ user });
         if (!mounted) return;
         setProfile(p);
-
-        // Set a sensible default landing page once we know role
-        // (only if user hasn't already navigated)
-        setPage((prev) => {
-          if (prev && prev !== "discover") return prev;
-          return p?.profile_type === "owner" ? "manage" : "applications";
-        });
       } catch (e) {
         if (!mounted) return;
         setBootErr(e.message ?? String(e));
@@ -66,100 +71,214 @@ export default function App() {
     };
   }, [user?.id, planBump]);
 
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadUnread() {
+      if (!user?.id) return;
+      if (!profile) return;
+
+      try {
+        const n = await fetchUnreadInviteCount(user.id);
+        if (mounted) setUnreadInvites(n);
+      } catch {
+        // ignore for MVP
+      }
+    }
+
+    loadUnread();
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id, profile?.id, planBump]);
+
+  useEffect(() => {
+    if (user?.id && (page === ROUTES.LOGIN || page === ROUTES.SIGN_UP)) {
+      setPage(ROUTES.DISCOVER);
+    }
+  }, [user?.id, page]);
+
+  // Guard owner-only pages
+  useEffect(() => {
+    const ownerOnly =
+      page === ROUTES.BOATS ||
+      page === ROUTES.EVENTS ||
+      page === ROUTES.EVENT_CREW ||
+      page === ROUTES.INVITES;
+    if (!ownerOnly) return;
+    if (!profile) return; // avoid flicker while booting
+
+    // If onboarding incomplete, keep them in profile
+    if (needsSailorOnboarding(profile)) {
+      setPage(ROUTES.SAILOR_ONBOARDING);
+      return;
+    }
+
+    if (!isOwner) setPage(ROUTES.DISCOVER);
+  }, [page, profile, isOwner]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    if (!profile) return;
+
+    if (
+      needsSailorOnboarding(profile) &&
+      page !== ROUTES.SAILOR_ONBOARDING &&
+      page !== ROUTES.PROFILE
+    ) {
+      setPage(ROUTES.SAILOR_ONBOARDING);
+    }
+  }, [user?.id, profile, page]);
+
   async function signOut() {
     await supabase.auth.signOut();
     setProfile(null);
+    setPage(ROUTES.LOGIN);
   }
 
-  // ---------- RENDER STATES ----------
-
-  if (loading) return <div style={{ padding: 16 }}>Loading session…</div>;
-  if (!user) return <Login />;
-  if (booting) return <div style={{ padding: 16 }}>Setting up your profile…</div>;
+  // ---- Render states ----
+  if (loading) return <div className="container">Loading session…</div>;
+  if (!user) {
+    if (page === ROUTES.SIGN_UP) return <SignUp onDone={() => setPage(ROUTES.LOGIN)} />;
+    return <Login onCreateAccount={() => setPage(ROUTES.SIGN_UP)} />;
+  }
+  if (booting) return <div className="container">Setting up your profile…</div>;
 
   if (bootErr) {
     return (
-      <div style={{ padding: 16 }}>
-        <h3>Boot error</h3>
-        <div style={{ color: "crimson" }}>{bootErr}</div>
-        <button style={{ marginTop: 12 }} onClick={signOut}>
-          Sign out
-        </button>
-        <div style={{ marginTop: 12, fontSize: 12, opacity: 0.75 }}>
-          Common causes: RLS policies, missing columns, or env vars not set.
+      <div className="container">
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>Boot error</h3>
+          <div style={{ color: "crimson" }}>{bootErr}</div>
+          <button className="btn btnPrimary" style={{ marginTop: 12 }} onClick={signOut}>
+            Sign out
+          </button>
+          <div style={{ marginTop: 12, fontSize: 12, opacity: 0.75 }}>
+            Common causes: RLS policies, missing columns, or env vars not set.
+          </div>
         </div>
       </div>
     );
   }
 
-  // ---------- MAIN APP ----------
+  function renderPage() {
+    switch (page) {
+      case ROUTES.PROFILE:
+        return <Profile profile={profile} onSaved={() => setPlanBump((n) => n + 1)} />;
+      case ROUTES.SAILOR_ONBOARDING:
+        return <Profile profile={profile} onSaved={() => setPlanBump((n) => n + 1)} />;
+      case ROUTES.DISCOVER:
+        return (
+          <Discovery
+            profileType={profile?.profile_type}
+            profile={profile}
+            onNavigate={setPage}
+            onOpenEvent={(eventId) => {
+              setSelectedEventId(eventId);
+              setPage(ROUTES.EVENT_DETAILS);
+            }}
+          />
+        );
+      case ROUTES.APPLICATIONS:
+        return <MyApplications />;
+      case ROUTES.SAILING:
+        return <MyParticipations />;
+      case ROUTES.BOATS:
+        return <MyBoats profileType={profile?.profile_type} />;
+      case ROUTES.EVENTS:
+        return (
+          <Events
+            profileType={profile?.profile_type}
+            onCreateEvent={() => {
+              setPage(ROUTES.CREATE_EVENT);
+            }}
+            onManageCrew={(eventId) => {
+              setSelectedEventId(eventId);
+              setPage(ROUTES.EVENT_CREW);
+            }}
+          />
+        );
+      case ROUTES.EVENT_DETAILS:
+        return (
+          <EventDetails
+            eventId={selectedEventId}
+            profileType={profile?.profile_type}
+            profile={profile}
+            onBack={() => setPage(ROUTES.DISCOVER)}
+            onGoApplications={() => setPage(ROUTES.APPLICATIONS)}
+          />
+        );
+      case ROUTES.INVITES:
+        return <OwnerInvites profileType={profile?.profile_type} />;
+      case ROUTES.INBOX:
+        return <Inbox userId={user.id} />;
+      case ROUTES.CREATE_EVENT:
+        return (
+          <CreateEvent
+            profileType={profile?.profile_type}
+            onBack={() => setPage(ROUTES.EVENTS)}
+            onCreated={() => setPage(ROUTES.EVENTS)}
+          />
+        );
+      case ROUTES.EVENT_CREW:
+        return (
+          <EventCrewBoard
+            eventId={selectedEventId}
+            profileType={profile?.profile_type}
+            onBack={() => setPage(ROUTES.EVENTS)}
+          />
+        );
+      case ROUTES.UPGRADE:
+        return (
+          <Upgrade
+            userId={user.id}
+            planTier={profile?.plan_tier}
+            onUpgraded={() => setPlanBump((n) => n + 1)}
+          />
+        );
+      default:
+        return <Discovery profileType={profile?.profile_type} />;
+    }
+  }
+
+  if (import.meta.env.DEV) {
+    const known = new Set(Object.values(ROUTES));
+    if (!known.has(page)) console.warn("Unknown route:", { name: page });
+  }
 
   return (
-    <div style={{ padding: 16, maxWidth: 1100, margin: "0 auto" }}>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+    <div className="container">
+      <div className="topbar">
         <div>
-          <h2 style={{ margin: 0 }}>Crew App</h2>
-          <div style={{ fontSize: 12, opacity: 0.8 }}>
+          <div className="title">Crew App</div>
+          <div className="subtle">
             Signed in as <b>{user.email}</b>
+            {profile?.profile_type ? (
+              <>
+                {" "}
+                • <b>{String(profile.profile_type).toUpperCase()}</b>
+              </>
+            ) : null}
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <button onClick={() => setShowProfile((v) => !v)}>
-            {showProfile ? "Hide profile" : "Profile"}
-          </button>
-          <button onClick={signOut}>Sign out</button>
-        </div>
+        <button className="btn btnGhost" onClick={signOut}>
+          Sign out
+        </button>
       </div>
 
-      <hr style={{ margin: "16px 0" }} />
+      <Nav
+        current={page}
+        onChange={setPage}
+        isOwner={isOwner}
+        locked={profile ? needsSailorOnboarding(profile) : true}
+        unreadInvites={unreadInvites}
+      />
 
-      {/* Collapsible Profile */}
-      {showProfile && (
-        <div style={{ border: "1px solid #eee", borderRadius: 12, padding: 14, marginBottom: 16 }}>
-          <h3 style={{ marginTop: 0 }}>Profile</h3>
-          <div style={{ lineHeight: "1.6" }}>
-            <div>
-              <b>Name:</b> {profile?.display_name}
-            </div>
-            <div>
-              <b>Type:</b> {profile?.profile_type}
-            </div>
-            <div>
-              <b>Plan:</b> {(profile?.plan_tier ?? "free").toUpperCase()}
-            </div>
-            <div style={{ fontSize: 12, opacity: 0.75 }}>
-              <b>User ID:</b> {profile?.id}
-            </div>
-          </div>
-        </div>
-      )}
+      {renderPage()}
 
-      {/* Navigation */}
-      <Nav current={page} onChange={setPage} isOwner={isOwner} />
-
-      {/* Pages (ONLY ONE AT A TIME) */}
-      {page === "discover" && <Discovery profileType={profile?.profile_type} />}
-
-      {page === "applications" && <MyApplications />}
-
-      {page === "sailing" && <MyParticipations />}
-
-      {page === "manage" && (
-        <OwnerApplicants profileType={profile?.profile_type} planTier={profile?.plan_tier} />
-      )}
-
-      {page === "upgrade" && (
-        <Upgrade
-          userId={user.id}
-          planTier={profile?.plan_tier}
-          onUpgraded={() => setPlanBump((n) => n + 1)}
-        />
-      )}
-
-      <div style={{ marginTop: 18, fontSize: 12, opacity: 0.7 }}>
-        Tip: Use <b>Applications</b> as your inbox, <b>Sailing</b> for confirmed sails, and <b>Discover</b> to find crew.
+      <div style={{ marginTop: 18, fontSize: 12, opacity: 0.6 }}>
+        Owner spine: Boats → Events → Discover → Invite. Sailor spine: Discover → Applications → Sailing.
       </div>
     </div>
   );

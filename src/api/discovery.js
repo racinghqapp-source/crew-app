@@ -1,37 +1,61 @@
+// src/api/discovery.js
 import { supabase } from "../lib/supabase";
 
-/**
- * MVP: discovery returns only safe/basic fields.
- * We'll add Pro-only trust metrics later via RPC.
- */
-export async function fetchDiscoverProfiles({
-  search = "",
-  role = "",
-  availableOnly = false,
-  type = "sailor",
-  limit = 50,
-}) {
-  let q = supabase
+export async function fetchDiscoverySailors() {
+  const { data, error } = await supabase
     .from("profiles")
-    .select("id, display_name, profile_type, location_text, roles, is_available")
-    .order("display_name", { ascending: true })
-    .limit(limit);
+    .select(
+      "id, display_name, location_text, reliability_score, would_sail_again_pct, verified_participations_count, competence_band, offshore_qualified, is_available, roles"
+    )
+    .eq("profile_type", "sailor")
+    .order("reliability_score", { ascending: false })
+    .limit(100);
 
-  if (type) q = q.eq("profile_type", type);
-  if (availableOnly) q = q.eq("is_available", true);
-
-  // roles is text[]; we can filter by "contains" if your column is truly text[]
-  // Using .contains requires roles to be an array type in Postgres.
-  if (role) q = q.contains("roles", [role]);
-
-  // simple search on display_name
-  if (search?.trim()) {
-    const s = search.trim();
-    // ilike with wildcard
-    q = q.ilike("display_name", `%${s}%`);
-  }
-
-  const { data, error } = await q;
   if (error) throw error;
   return data ?? [];
+}
+
+/**
+ * Owner: fetch my events (with boat) so I can pick which event to invite a sailor to.
+ */
+export async function fetchOwnerEventsWithBoats() {
+  const { data, error } = await supabase
+    .from("events")
+    .select(
+      `
+      id,
+      title,
+      start_date,
+      end_date,
+      location_text,
+      status,
+      boat:boats(
+        id,
+        name,
+        class,
+        length_m,
+        is_offshore_capable
+      )
+    `
+    )
+    .order("start_date", { ascending: true });
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+/**
+ * Owner: invite sailor to event (idempotent).
+ * Creates/updates applications row as shortlisted.
+ */
+export async function ownerInviteSailor({ eventId, sailorId, preferredRole, note }) {
+  const { data, error } = await supabase.rpc("owner_invite_sailor", {
+    p_event_id: eventId,
+    p_sailor_id: sailorId,
+    p_preferred_role: preferredRole ?? null,
+    p_note: note ?? null,
+  });
+
+  if (error) throw error;
+  return data; // application id
 }

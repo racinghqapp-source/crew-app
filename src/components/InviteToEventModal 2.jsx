@@ -73,6 +73,8 @@ export default function InviteToEventModal({
   busy,
   eventId,
   onInvited,
+  onSendStart,
+  onSendError,
 }) {
   const [err, setErr] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -100,7 +102,6 @@ export default function InviteToEventModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    // reset when opening
     setErr(null);
     setSelected(null);
     setRole("");
@@ -135,7 +136,10 @@ export default function InviteToEventModal({
       setErr("Pick a sailor first.");
       return;
     }
+
     setErr(null);
+    onSendStart?.();
+
     try {
       await ownerInviteSailor({
         eventId,
@@ -143,10 +147,11 @@ export default function InviteToEventModal({
         preferredRole: role ? role : null,
         note: note ? note : null,
       });
+
       onInvited?.();
-      onClose?.();
     } catch (e) {
       setErr(e.message ?? String(e));
+      onSendError?.();
     }
   }
 
@@ -175,7 +180,6 @@ export default function InviteToEventModal({
           overflow: "hidden",
         }}
       >
-        {/* Header */}
         <div style={{ padding: 14, borderBottom: "1px solid #eef2f7", display: "flex", justifyContent: "space-between", gap: 12 }}>
           <div>
             <div style={{ fontWeight: 950, color: "#0b2440", fontSize: 16 }}>Invite sailor</div>
@@ -188,12 +192,10 @@ export default function InviteToEventModal({
           </button>
         </div>
 
-        {/* Body */}
         <div style={{ padding: 14 }}>
           {err && <div style={{ color: "crimson", marginBottom: 10 }}>{err}</div>}
 
           <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: 14 }}>
-            {/* Left: sailor picker */}
             <div>
               <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ fontWeight: 900, color: "#0b2440" }}>Choose sailor</div>
@@ -226,12 +228,7 @@ export default function InviteToEventModal({
                 }}
               >
                 {filtered.map((p) => (
-                  <SailorRow
-                    key={p.id}
-                    p={p}
-                    selected={selected?.id === p.id}
-                    onSelect={setSelected}
-                  />
+                  <SailorRow key={p.id} p={p} selected={selected?.id === p.id} onSelect={setSelected} />
                 ))}
 
                 {!loading && !filtered.length && (
@@ -242,7 +239,6 @@ export default function InviteToEventModal({
               </div>
             </div>
 
-            {/* Right: invite details */}
             <div>
               <div style={{ fontWeight: 900, color: "#0b2440" }}>Invite details</div>
 
@@ -302,7 +298,11 @@ export default function InviteToEventModal({
                 />
               </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 14 }}>
+              <div style={{ fontSize: 11, opacity: 0.6, marginTop: 8 }}>
+                debug: eventId={String(!!eventId)} • selected={String(!!selected?.id)} • busy={String(!!busy)}
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 10 }}>
                 <button
                   onClick={onClose}
                   disabled={busy}

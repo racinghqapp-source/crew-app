@@ -1,0 +1,17 @@
+export const ROUTES = {
+  LOGIN: "login",
+  SIGN_UP: "sign_up",
+  PROFILE: "profile",
+  SAILOR_ONBOARDING: "sailor_onboarding",
+  INBOX: "inbox",
+  DISCOVER: "discover",
+  APPLICATIONS: "applications",
+  SAILING: "sailing",
+  BOATS: "boats",
+  EVENTS: "events",
+  EVENT_DETAILS: "event_details",
+  EVENT_CREW: "event_crew",
+  INVITES: "invites",
+  CREATE_EVENT: "create_event",
+  UPGRADE: "upgrade",
+};

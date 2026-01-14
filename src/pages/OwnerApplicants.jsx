@@ -4,7 +4,7 @@ import { useSession } from "../hooks/useSession";
 import { isPro } from "../hooks/usePlan";
 import { fetchMyEvents, fetchApplicantsBasic, fetchApplicantsPro, setApplicationStatus } from "../api/owner";
 
-export default function OwnerApplicants({ profileType, planTier }) {
+export default function OwnerApplicants({ profileType, planTier, initialEventId = "" }) {
   const { user } = useSession();
   const pro = isPro(planTier);
 
@@ -22,7 +22,7 @@ export default function OwnerApplicants({ profileType, planTier }) {
     try {
       const data = await fetchMyEvents(user.id);
       setEvents(data);
-      if (!eventId && data.length) setEventId(data[0].id);
+      if (!eventId && data.length) setEventId(initialEventId || data[0].id);
     } catch (e) {
       setErr(e.message ?? String(e));
     } finally {
