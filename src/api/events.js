@@ -90,16 +90,19 @@ export async function updateEventCrewRequired({ eventId, crewRequired }) {
       ? null
       : Number(crewRequired);
 
-  if (value !== null && (!Number.isFinite(value) || value < 1 || value > 50)) {
-    throw new Error("Crew required must be a number between 1 and 50 (or blank).");
+  if (value !== null && (!Number.isFinite(value) || value < 0 || value > 50)) {
+    throw new Error("Crew Required Must Be A Number Between 0 And 50 (Or Blank).");
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("events")
     .update({ crew_required: value })
-    .eq("id", eventId);
+    .eq("id", eventId)
+    .select("id, crew_required")
+    .maybeSingle();
 
   if (error) throw error;
+  if (!data) throw new Error("Crew Required Update Failed.");
 }
 
 export async function fetchPublishedEvents() {
