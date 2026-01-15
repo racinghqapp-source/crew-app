@@ -90,7 +90,7 @@ export default function Applications() {
         <div>
           <div style={{ fontWeight: 750, fontSize: 16 }}>Applications</div>
           <div className="subtle">
-            Track invites and responses. Accepted is the only state that counts toward readiness.
+            Track Invites And Responses. Accepted Is The Only State That Counts Toward Readiness.
           </div>
         </div>
 
@@ -99,7 +99,7 @@ export default function Applications() {
             Export
           </button>
           <button className="btn btnSmall" type="button">
-            New invite
+            New Invite
           </button>
         </div>
       </div>
@@ -117,7 +117,7 @@ export default function Applications() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search crew, events, boats, roles…"
+          placeholder="Search Crew, Events, Boats, Roles…"
           style={{
             flex: 1,
             minWidth: 240,
@@ -146,7 +146,7 @@ export default function Applications() {
 
       {/* Table */}
       {items.length === 0 ? (
-        <div className="alert">No applications match your filters.</div>
+        <div className="alert">No Applications Match Your Filters.</div>
       ) : (
         <div className="tableWrap">
           <table className="table">
@@ -216,7 +216,7 @@ export default function Applications() {
       )}
 
       <div className="subtle" style={{ marginTop: 10 }}>
-        UI rule: Accepted is green. Everything else is secondary (muted/orange/red).
+        UI Rule: Accepted Is Green. Everything Else Is Secondary (Muted/Orange/Red).
       </div>
     </div>
   );

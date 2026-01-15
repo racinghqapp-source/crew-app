@@ -10,7 +10,7 @@ export default function RatingModal({
   isOpen,
   onClose,
   onSubmit,
-  title = "Leave a rating",
+  title = "Leave A Rating",
   busy = false,
 }) {
   const [reliability, setReliability] = useState(5);
@@ -101,7 +101,7 @@ export default function RatingModal({
               onChange={(e) => setWouldSailAgain(e.target.checked)}
               disabled={busy}
             />
-            <span><b>Would sail again</b></span>
+            <span><b>Would Sail Again</b></span>
           </label>
         </div>
 
@@ -118,12 +118,12 @@ export default function RatingModal({
             }
             disabled={busy || !canSubmit}
           >
-            {busy ? "Submitting…" : "Submit rating"}
+            {busy ? "Submitting…" : "Submit Rating"}
           </button>
         </div>
 
         <div style={{ marginTop: 10, fontSize: 12, opacity: 0.75 }}>
-          Tip: keep it factual—this is a structured score, not a public review.
+          Tip: Keep It Factual—This Is A Structured Score, Not A Public Review.
         </div>
       </div>
     </div>

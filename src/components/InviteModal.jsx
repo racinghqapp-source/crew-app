@@ -51,7 +51,7 @@ function SailorRow({ p, selected, onSelect }) {
             <Chip>Reliability {rel}</Chip>
             <Chip>Verified {ver}</Chip>
             <Chip>Band {band}</Chip>
-            {!!p.offshore_qualified && <Chip>Offshore qualified</Chip>}
+            {!!p.offshore_qualified && <Chip>Offshore Qualified</Chip>}
             {!!p.is_available && <Chip>Available</Chip>}
             {!!(p.roles?.length) && <Chip>Roles: {p.roles.join(", ")}</Chip>}
           </div>
@@ -128,11 +128,11 @@ export default function InviteToEventModal({
 
   async function send() {
     if (!eventId) {
-      setErr("Missing eventId.");
+      setErr("Missing EventId.");
       return;
     }
     if (!selected?.id) {
-      setErr("Pick a sailor first.");
+      setErr("Pick A Sailor First.");
       return;
     }
     setErr(null);
@@ -178,9 +178,9 @@ export default function InviteToEventModal({
         {/* Header */}
         <div style={{ padding: 14, borderBottom: "1px solid #eef2f7", display: "flex", justifyContent: "space-between", gap: 12 }}>
           <div>
-            <div style={{ fontWeight: 950, color: "#0b2440", fontSize: 16 }}>Invite sailor</div>
+            <div style={{ fontWeight: 950, color: "#0b2440", fontSize: 16 }}>Invite Sailor</div>
             <div style={{ fontSize: 12, opacity: 0.75, marginTop: 4 }}>
-              Pick a sailor, add role/note, and send the invite.
+              Pick A Sailor, Add Role/Note, And Send The Invite.
             </div>
           </div>
           <button onClick={onClose} disabled={busy} style={{ padding: "8px 10px", borderRadius: 10 }}>
@@ -196,7 +196,7 @@ export default function InviteToEventModal({
             {/* Left: sailor picker */}
             <div>
               <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ fontWeight: 900, color: "#0b2440" }}>Choose sailor</div>
+                <div style={{ fontWeight: 900, color: "#0b2440" }}>Choose Sailor</div>
                 <div style={{ fontSize: 12, opacity: 0.7 }}>
                   {loading ? "Loading…" : `${filtered.length} shown`}
                 </div>
@@ -205,7 +205,7 @@ export default function InviteToEventModal({
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Search name, location, roles…"
+                placeholder="Search Name, Location, Roles…"
                 style={{
                   width: "100%",
                   marginTop: 10,
@@ -236,7 +236,7 @@ export default function InviteToEventModal({
 
                 {!loading && !filtered.length && (
                   <div style={{ opacity: 0.75, padding: 12, border: "1px dashed #e5e7eb", borderRadius: 14 }}>
-                    No sailors match your search.
+                    No Sailors Match Your Search.
                   </div>
                 )}
               </div>
@@ -244,10 +244,10 @@ export default function InviteToEventModal({
 
             {/* Right: invite details */}
             <div>
-              <div style={{ fontWeight: 900, color: "#0b2440" }}>Invite details</div>
+              <div style={{ fontWeight: 900, color: "#0b2440" }}>Invite Details</div>
 
               <div style={{ marginTop: 10 }}>
-                <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Selected sailor</div>
+                <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Selected Sailor</div>
                 <div
                   style={{
                     border: "1px solid #e5e7eb",
@@ -266,13 +266,13 @@ export default function InviteToEventModal({
                       </div>
                     </>
                   ) : (
-                    <div style={{ fontSize: 12, opacity: 0.7 }}>Pick a sailor on the left.</div>
+                    <div style={{ fontSize: 12, opacity: 0.7 }}>Pick A Sailor On The Left.</div>
                   )}
                 </div>
               </div>
 
               <div style={{ marginTop: 12 }}>
-                <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Preferred role (optional)</div>
+                <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Preferred Role (Optional)</div>
                 <input
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
@@ -287,12 +287,12 @@ export default function InviteToEventModal({
               </div>
 
               <div style={{ marginTop: 12 }}>
-                <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Note (optional)</div>
+                <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Note (Optional)</div>
                 <textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   rows={6}
-                  placeholder="Short message to the sailor…"
+                  placeholder="Short Message To The Sailor…"
                   style={{
                     width: "100%",
                     padding: 10,
@@ -325,12 +325,12 @@ export default function InviteToEventModal({
                     opacity: canSend ? 1 : 0.6,
                   }}
                 >
-                  {busy ? "Sending…" : "Send invite"}
+                  {busy ? "Sending…" : "Send Invite"}
                 </button>
               </div>
 
               <div style={{ fontSize: 11, opacity: 0.6, marginTop: 10, lineHeight: 1.3 }}>
-                Tip: If you invite the same sailor twice, the backend should return the existing application instead of creating duplicates.
+                Tip: If You Invite The Same Sailor Twice, The Backend Should Return The Existing Application Instead Of Creating Duplicates.
               </div>
             </div>
           </div>

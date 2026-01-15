@@ -60,7 +60,7 @@ export default function ReputationCard({ userId, bump = 0 }) {
       {!err && (
         <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div>
-            <div style={{ fontSize: 12, opacity: 0.7 }}>Verified sails</div>
+            <div style={{ fontSize: 12, opacity: 0.7 }}>Verified Sails</div>
             <div style={{ fontSize: 22, fontWeight: 700 }}>
               {p?.verified_participations_count ?? 0}
             </div>
@@ -75,7 +75,7 @@ export default function ReputationCard({ userId, bump = 0 }) {
           </div>
 
           <div>
-            <div style={{ fontSize: 12, opacity: 0.7 }}>Competence band</div>
+            <div style={{ fontSize: 12, opacity: 0.7 }}>Competence Band</div>
             <div style={{ marginTop: 6 }}>
               <span style={bandPill(p?.competence_band)}>
                 {(p?.competence_band ?? "unknown").toUpperCase()}
@@ -84,7 +84,7 @@ export default function ReputationCard({ userId, bump = 0 }) {
           </div>
 
           <div>
-            <div style={{ fontSize: 12, opacity: 0.7 }}>Would sail again</div>
+            <div style={{ fontSize: 12, opacity: 0.7 }}>Would Sail Again</div>
             <div style={{ fontSize: 22, fontWeight: 700 }}>
               {p?.would_sail_again_pct ?? 0}
               <span style={{ fontSize: 12, opacity: 0.7 }}>%</span>
@@ -94,7 +94,7 @@ export default function ReputationCard({ userId, bump = 0 }) {
       )}
 
       <div style={{ marginTop: 10, fontSize: 12, opacity: 0.75 }}>
-        Ratings only count after a verified participation.
+        Ratings Only Count After A Verified Participation.
       </div>
     </div>
   );

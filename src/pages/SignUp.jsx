@@ -24,7 +24,7 @@ export default function SignUp({ onDone }) {
 
   return (
     <div style={{ maxWidth: 420, margin: "60px auto", padding: 16 }}>
-      <h2>Create account</h2>
+      <h2>Create Account</h2>
 
       <form onSubmit={submit} style={{ display: "grid", gap: 12 }}>
         <label>

@@ -87,7 +87,7 @@ export default function OwnerApplicants({ profileType, planTier, initialEventId 
       <div style={{ marginTop: 24, border: "1px solid #eee", borderRadius: 12, padding: 14 }}>
         <h3 style={{ marginTop: 0 }}>Owner Applicants</h3>
         <div style={{ fontSize: 12, opacity: 0.75 }}>
-          This section appears for <b>owner</b> accounts.
+          This Section Appears For <b>Owner</b> Accounts.
         </div>
       </div>
     );
@@ -112,9 +112,9 @@ export default function OwnerApplicants({ profileType, planTier, initialEventId 
             border: "1px solid #fed7aa",
           }}
         >
-          <b>Owner Pro unlocks:</b> ranked applicants + trust metrics + accept/reject.
+          <b>Owner Pro Unlocks:</b> Ranked Applicants + Trust Metrics + Accept/Reject.
           <div style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
-            (Dev) Set <code>profiles.plan_tier</code> to <code>'pro'</code> in Supabase to simulate upgrade.
+            (Dev) Set <code>profiles.plan_tier</code> To <code>'pro'</code> In Supabase To Simulate Upgrade.
           </div>
         </div>
       )}
@@ -128,7 +128,7 @@ export default function OwnerApplicants({ profileType, planTier, initialEventId 
           onChange={(e) => setEventId(e.target.value)}
           style={{ padding: 10, minWidth: 280 }}
         >
-          {!events.length && <option value="">No events found</option>}
+          {!events.length && <option value="">No Events Found</option>}
           {events.map((ev) => (
             <option key={ev.id} value={ev.id}>
               {ev.title ?? "Untitled"} ({ev.start_date ?? "?"})
@@ -137,7 +137,7 @@ export default function OwnerApplicants({ profileType, planTier, initialEventId 
         </select>
 
         <button onClick={() => loadApplicants(eventId)} disabled={loadingRows || !eventId}>
-          {loadingRows ? "Loading…" : "Load applicants"}
+          {loadingRows ? "Loading…" : "Load Applicants"}
         </button>
       </div>
 
@@ -150,7 +150,7 @@ export default function OwnerApplicants({ profileType, planTier, initialEventId 
 
               {pro && <th>Score</th>}
               {pro && <th>Reliability</th>}
-              {pro && <th>Would again</th>}
+              {pro && <th>Would Again</th>}
               {pro && <th>Verified</th>}
               {pro && <th>Band</th>}
 
@@ -192,7 +192,7 @@ export default function OwnerApplicants({ profileType, planTier, initialEventId 
                         </button>
                       </>
                     ) : (
-                      <span style={{ fontSize: 12, opacity: 0.75 }}>Upgrade to act</span>
+                      <span style={{ fontSize: 12, opacity: 0.75 }}>Upgrade To Act</span>
                     )}
                   </td>
                 </tr>
@@ -202,7 +202,7 @@ export default function OwnerApplicants({ profileType, planTier, initialEventId 
             {!ranked.length && (
               <tr>
                 <td colSpan={pro ? 10 : 5} style={{ opacity: 0.7, paddingTop: 12 }}>
-                  {eventId ? "No applications yet for this event." : "Select an event to view applications."}
+                  {eventId ? "No Applications Yet For This Event." : "Select An Event To View Applications."}
                 </td>
               </tr>
             )}
@@ -211,7 +211,7 @@ export default function OwnerApplicants({ profileType, planTier, initialEventId 
       </div>
 
       <div style={{ marginTop: 10, fontSize: 12, opacity: 0.75 }}>
-        Server-enforced paywall: Free owners cannot access trust metrics or accept/reject.
+        Server-Enforced Paywall: Free Owners Cannot Access Trust Metrics Or Accept/Reject.
       </div>
     </div>
   );

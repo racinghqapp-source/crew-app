@@ -52,10 +52,10 @@ function fmtLen(m) {
 const ROLE_OPTIONS = ["Helm", "Trim", "Bow", "Pit", "Mast", "Navigator", "Tactician", "Grinder"];
 
 function getApplyBlockReason({ profile, event }) {
-  if (!profile) return "Loading profile…";
-  if (needsSailorOnboarding(profile)) return "Complete your profile to apply";
-  if (profile?.is_suspended || profile?.sailor_suspended) return "Your account is suspended";
-  if (String(event?.status) !== "published") return "Event is not open";
+  if (!profile) return "Loading Profile…";
+  if (needsSailorOnboarding(profile)) return "Complete Your Profile To Apply";
+  if (profile?.is_suspended || profile?.sailor_suspended) return "Your Account Is Suspended";
+  if (String(event?.status) !== "published") return "Event Is Not Open";
   return "";
 }
 
@@ -103,7 +103,7 @@ export default function EventDetails({ eventId, profileType, profile, onBack, on
       return;
     }
     if (profile?.is_suspended || profile?.sailor_suspended) {
-      alert("Your account is suspended. Contact support.");
+      alert("Your Account Is Suspended. Contact Support.");
       return;
     }
     setBusy(true);
@@ -122,13 +122,13 @@ export default function EventDetails({ eventId, profileType, profile, onBack, on
     }
   }
 
-  if (!eventId) return <div className="card">No event selected.</div>;
-  if (loading) return <div className="card">Loading event…</div>;
+  if (!eventId) return <div className="card">No Event Selected.</div>;
+  if (loading) return <div className="card">Loading Event…</div>;
 
   if (err) {
     return (
       <div className="card">
-        <div style={{ fontWeight: 800 }}>Couldn't load event</div>
+        <div style={{ fontWeight: 800 }}>Couldn’t Load Event</div>
         <div style={{ marginTop: 8, color: "crimson" }}>{err}</div>
         <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
           <button className="btn btnGhost" onClick={onBack}>
@@ -195,14 +195,14 @@ export default function EventDetails({ eventId, profileType, profile, onBack, on
             <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
               {boat.home_port ? <span className="badge badgeMuted">Home: {boat.home_port}</span> : null}
               {boat.offshore_capable ? (
-                <span className="badge badgeGreen">Offshore capable</span>
+                <span className="badge badgeGreen">Offshore Capable</span>
               ) : (
                 <span className="badge badgeMuted">Inshore</span>
               )}
             </div>
           </>
         ) : (
-          <div className="subtle">No boat details available.</div>
+          <div className="subtle">No Boat Details Available.</div>
         )}
       </div>
 
@@ -213,7 +213,7 @@ export default function EventDetails({ eventId, profileType, profile, onBack, on
             <div style={{ fontWeight: 700 }}>{owner.display_name || "Skipper"}</div>
             <div className="subtle" style={{ marginTop: 6 }}>
               {owner.home_port ? <span>{owner.home_port} • </span> : null}
-              {owner.offshore_qualified ? <span>Offshore qualified</span> : null}
+              {owner.offshore_qualified ? <span>Offshore Qualified</span> : null}
             </div>
             {owner.bio ? <div style={{ marginTop: 10, fontSize: 13, opacity: 0.9 }}>{owner.bio}</div> : null}
             <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -221,12 +221,12 @@ export default function EventDetails({ eventId, profileType, profile, onBack, on
                 <Badge tone="muted">Reliability: {owner.reliability_score}</Badge>
               ) : null}
               {typeof owner.would_sail_again_pct === "number" ? (
-                <Badge tone="muted">Would sail again: {owner.would_sail_again_pct}%</Badge>
+                <Badge tone="muted">Would Sail Again: {owner.would_sail_again_pct}%</Badge>
               ) : null}
             </div>
           </>
         ) : (
-          <div className="subtle">No skipper profile linked.</div>
+          <div className="subtle">No Skipper Profile Linked.</div>
         )}
       </div>
 
@@ -238,27 +238,29 @@ export default function EventDetails({ eventId, profileType, profile, onBack, on
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
               <div>
                 <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                  <div style={{ fontWeight: 700 }}>You've applied</div>
-                  <Badge tone="blue">{myApp.status}</Badge>
+                  <div style={{ fontWeight: 700 }}>You’ve Applied</div>
+                  <Badge tone="blue">
+                    {myApp.status === "shortlisted" ? "Invited" : myApp.status}
+                  </Badge>
                 </div>
                 <div className="subtle" style={{ marginTop: 6 }}>
                   Applied: {fmtDate(myApp.created_at)}
                 </div>
               </div>
               <button className="btn btnGhost" onClick={onGoApplications}>
-                View in Applications
+                View In Applications
               </button>
             </div>
           ) : (
             <>
               <div className="subtle" style={{ marginBottom: 10 }}>
-                Add a preferred role + short note. You can withdraw later in Applications.
+                Add A Preferred Role + Short Note. You Can Withdraw Later In Applications.
               </div>
 
               <div style={{ display: "grid", gap: 10 }}>
                 <div>
                   <label className="subtle" style={{ fontWeight: 700 }}>
-                    Preferred position
+                    Preferred Position
                   </label>
                   <select
                     value={preferredRole}
@@ -271,7 +273,7 @@ export default function EventDetails({ eventId, profileType, profile, onBack, on
                       marginTop: 6,
                     }}
                   >
-                    <option value="">No preference</option>
+                    <option value="">No Preference</option>
                     {ROLE_OPTIONS.map((r) => (
                       <option key={r} value={r}>
                         {r}
@@ -281,12 +283,12 @@ export default function EventDetails({ eventId, profileType, profile, onBack, on
                 </div>
 
                 <div>
-                  <div className="subtle" style={{ marginBottom: 6 }}>Note (optional)</div>
+                  <div className="subtle" style={{ marginBottom: 6 }}>Note (Optional)</div>
                   <textarea
                     className="input"
                     value={note}
                     onChange={(ev) => setNote(ev.target.value)}
-                    placeholder="Short intro + relevant experience"
+                    placeholder="Short Intro + Relevant Experience"
                     rows={3}
                   />
                 </div>
@@ -298,7 +300,7 @@ export default function EventDetails({ eventId, profileType, profile, onBack, on
                     disabled={busy || isBlocked}
                     title={isBlocked ? blockReason : ""}
                   >
-                    {busy ? "Applying…" : isBlocked ? "Not open" : "Apply"}
+                    {busy ? "Applying…" : isBlocked ? "Not Open" : "Apply"}
                   </button>
                   <button className="btn btnGhost" onClick={onBack} disabled={busy}>
                     Back

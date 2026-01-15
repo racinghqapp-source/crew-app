@@ -22,21 +22,22 @@ export async function fetchOwnerBoats(ownerId) {
  */
 export async function createOwnerEvent({
   ownerId,
-  boatId,
   title,
+  boatId,
   startDate,
-  endDate,
+  endDate = null,
   locationText,
-  crewRequired,
+  locationId,
+  crewRequired = 5,
 }) {
   if (!ownerId) throw new Error("createOwnerEvent: missing ownerId");
-  if (!boatId) throw new Error("createOwnerEvent: missing boatId");
   if (!title?.trim()) throw new Error("createOwnerEvent: missing title");
-  if (!startDate) throw new Error("createOwnerEvent: missing start date");
-  if (!endDate) throw new Error("createOwnerEvent: missing end date");
-  if (!locationText?.trim()) throw new Error("createOwnerEvent: missing location");
-  if (!Number.isFinite(Number(crewRequired)) || Number(crewRequired) <= 0) {
-    throw new Error("createOwnerEvent: crew required must be > 0");
+  if (!boatId) throw new Error("createOwnerEvent: missing boatId");
+  if (!startDate) throw new Error("createOwnerEvent: missing startDate");
+
+  const locText = String(locationText ?? "").trim();
+  if (!locText) {
+    throw new Error("createOwnerEvent: location_text is required");
   }
 
   const payload = {
@@ -44,18 +45,19 @@ export async function createOwnerEvent({
     boat_id: boatId,
     title: title.trim(),
     start_date: startDate, // expects YYYY-MM-DD
-    end_date: endDate, // expects YYYY-MM-DD (NOT NULL in your schema)
-    location_text: locationText.trim(),
-    status: "published", // matches what you already use in UI
-    crew_required: Number(crewRequired),
+    end_date: endDate || null,
+    location_text: locText,
+    location_id: locationId ?? null,
+    crew_required: Number(crewRequired) || 1,
+    status: "draft",
   };
 
   const { data, error } = await supabase
     .from("events")
-    .insert(payload)
-    .select("id")
+    .insert([payload])
+    .select("*")
     .single();
 
   if (error) throw error;
-  return data?.id;
+  return data;
 }

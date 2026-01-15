@@ -11,6 +11,7 @@ import { ROUTES } from "./routes";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import Nav from "./components/Nav";
+import AppHeader from "./components/AppHeader";
 
 import Discovery from "./pages/Discovery";
 import MyApplications from "./pages/MyApplications";
@@ -72,25 +73,12 @@ export default function App() {
   }, [user?.id, planBump]);
 
   useEffect(() => {
-    let mounted = true;
+    if (!user?.id) return;
 
-    async function loadUnread() {
-      if (!user?.id) return;
-      if (!profile) return;
-
-      try {
-        const n = await fetchUnreadInviteCount(user.id);
-        if (mounted) setUnreadInvites(n);
-      } catch {
-        // ignore for MVP
-      }
-    }
-
-    loadUnread();
-    return () => {
-      mounted = false;
-    };
-  }, [user?.id, profile?.id, planBump]);
+    fetchUnreadInviteCount(user.id)
+      .then(setUnreadInvites)
+      .catch(() => {});
+  }, [user?.id, planBump]);
 
   useEffect(() => {
     if (user?.id && (page === ROUTES.LOGIN || page === ROUTES.SIGN_UP)) {
@@ -137,24 +125,24 @@ export default function App() {
   }
 
   // ---- Render states ----
-  if (loading) return <div className="container">Loading session…</div>;
+  if (loading) return <div className="container">Loading Session…</div>;
   if (!user) {
     if (page === ROUTES.SIGN_UP) return <SignUp onDone={() => setPage(ROUTES.LOGIN)} />;
     return <Login onCreateAccount={() => setPage(ROUTES.SIGN_UP)} />;
   }
-  if (booting) return <div className="container">Setting up your profile…</div>;
+  if (booting) return <div className="container">Setting Up Your Profile…</div>;
 
   if (bootErr) {
     return (
       <div className="container">
         <div className="card">
-          <h3 style={{ marginTop: 0 }}>Boot error</h3>
+          <h3 style={{ marginTop: 0 }}>Boot Error</h3>
           <div style={{ color: "crimson" }}>{bootErr}</div>
           <button className="btn btnPrimary" style={{ marginTop: 12 }} onClick={signOut}>
-            Sign out
+            Sign Out
           </button>
           <div style={{ marginTop: 12, fontSize: 12, opacity: 0.75 }}>
-            Common causes: RLS policies, missing columns, or env vars not set.
+            Common Causes: RLS Policies, Missing Columns, Or Env Vars Not Set.
           </div>
         </div>
       </div>
@@ -211,7 +199,15 @@ export default function App() {
       case ROUTES.INVITES:
         return <OwnerInvites profileType={profile?.profile_type} />;
       case ROUTES.INBOX:
-        return <Inbox userId={user.id} />;
+        return (
+          <Inbox
+            userId={user.id}
+            onOpenEvent={(eventId) => {
+              setSelectedEventId(eventId);
+              setPage(ROUTES.EVENT_DETAILS);
+            }}
+          />
+        );
       case ROUTES.CREATE_EVENT:
         return (
           <CreateEvent
@@ -248,24 +244,15 @@ export default function App() {
 
   return (
     <div className="container">
-      <div className="topbar">
-        <div>
-          <div className="title">Crew App</div>
-          <div className="subtle">
-            Signed in as <b>{user.email}</b>
-            {profile?.profile_type ? (
-              <>
-                {" "}
-                • <b>{String(profile.profile_type).toUpperCase()}</b>
-              </>
-            ) : null}
-          </div>
-        </div>
-
-        <button className="btn btnGhost" onClick={signOut}>
-          Sign out
-        </button>
-      </div>
+      <AppHeader
+        user={user}
+        profile={profile}
+        current={page}
+        isOwner={isOwner}
+        inviteCount={unreadInvites}
+        onNavigate={setPage}
+        onSignOut={signOut}
+      />
 
       <Nav
         current={page}

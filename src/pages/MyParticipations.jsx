@@ -56,7 +56,7 @@ export default function MyParticipations({ onRated }) {
     try {
       const already = await hasMyRatingForParticipation(p.id, user.id);
       if (already) {
-        setErr("You have already rated this participation.");
+        setErr("You Have Already Rated This Participation.");
         return;
       }
       setRatingTarget(p);
@@ -155,7 +155,7 @@ export default function MyParticipations({ onRated }) {
           {!rows.length && (
             <tr>
               <td colSpan="6" style={{ opacity: 0.7, paddingTop: 12 }}>
-                No participations found for your user.
+                No Participations Found For Your User.
               </td>
             </tr>
           )}
@@ -163,7 +163,7 @@ export default function MyParticipations({ onRated }) {
       </table>
 
       <div style={{ fontSize: 12, opacity: 0.7, marginTop: 8 }}>
-        “Rate” becomes available after verification (both parties confirm + completed).
+        “Rate” Becomes Available After Verification (Both Parties Confirm + Completed).
       </div>
 
       <RatingModal
@@ -175,7 +175,7 @@ export default function MyParticipations({ onRated }) {
         }}
         onSubmit={onSubmitRating}
         busy={ratingBusy}
-        title="Leave a rating (1–5)"
+        title="Leave A Rating (1–5)"
       />
     </div>
   );

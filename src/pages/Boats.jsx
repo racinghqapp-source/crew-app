@@ -59,7 +59,7 @@ export default function Boats() {
         <div>
           <div style={{ fontWeight: 750, fontSize: 16 }}>Boats</div>
           <div className="subtle">
-            Manage boats as operational containers. Events and lineups hang off these.
+            Manage Boats As Operational Containers. Events And Lineups Hang Off These.
           </div>
         </div>
 
@@ -68,7 +68,7 @@ export default function Boats() {
             Import
           </button>
           <button className="btn btnPrimary btnSmall" type="button">
-            New boat
+            New Boat
           </button>
         </div>
       </div>
@@ -86,7 +86,7 @@ export default function Boats() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search boats, class, length…"
+          placeholder="Search Boats, Class, Length…"
           style={{
             flex: 1,
             minWidth: 240,
@@ -114,7 +114,7 @@ export default function Boats() {
             type="button"
             onClick={() => setFilter("offshore")}
           >
-            Offshore capable
+            Offshore Capable
           </button>
           <button
             className={`btn btnSmall ${
@@ -123,14 +123,14 @@ export default function Boats() {
             type="button"
             onClick={() => setFilter("inshore")}
           >
-            Inshore only
+            Inshore Only
           </button>
         </div>
       </div>
 
       {/* Table */}
       {boats.length === 0 ? (
-        <div className="alert">No boats match your filters.</div>
+        <div className="alert">No Boats Match Your Filters.</div>
       ) : (
         <div className="tableWrap">
           <table className="table">
@@ -140,7 +140,7 @@ export default function Boats() {
                 <th style={{ width: 160 }}>Class</th>
                 <th style={{ width: 120 }}>Length</th>
                 <th style={{ width: 180 }}>Capability</th>
-                <th style={{ width: 160 }}>Active events</th>
+                <th style={{ width: 160 }}>Active Events</th>
                 <th style={{ width: 200 }} />
               </tr>
             </thead>
@@ -168,7 +168,7 @@ export default function Boats() {
 
                   <td>
                     <Badge tone={b.activeEvents > 0 ? "orange" : "muted"}>
-                      {b.activeEvents} event{b.activeEvents === 1 ? "" : "s"}
+                      {b.activeEvents} Event{b.activeEvents === 1 ? "" : "s"}
                     </Badge>
                   </td>
 
@@ -193,7 +193,7 @@ export default function Boats() {
       )}
 
       <div className="subtle" style={{ marginTop: 10 }}>
-        UI rule: capability is a signal (badge), not a “pretty” feature.
+        UI Rule: Capability Is A Signal (Badge), Not A “Pretty” Feature.
       </div>
     </div>
   );

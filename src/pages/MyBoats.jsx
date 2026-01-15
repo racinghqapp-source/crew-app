@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "../hooks/useSession";
 import { createBoat, deleteBoat, fetchMyBoats, updateBoat } from "../api/boats";
+import { searchYachtClubs } from "../api/locations";
 
 function Card({ children }) {
   return (
@@ -89,10 +90,148 @@ function GhostButton({ children, ...props }) {
   );
 }
 
+function Modal({ open, title, children, onClose }) {
+  if (!open) return null;
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(3, 7, 18, 0.35)",
+        display: "grid",
+        placeItems: "center",
+        padding: 16,
+        zIndex: 50,
+      }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose?.();
+      }}
+    >
+      <div
+        style={{
+          width: "min(720px, 100%)",
+          background: "white",
+          borderRadius: 14,
+          border: "1px solid #e5e7eb",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            padding: 14,
+            borderBottom: "1px solid #eef2f7",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <div style={{ fontWeight: 900, color: "#0b2440" }}>{title}</div>
+          <GhostButton onClick={onClose}>✕</GhostButton>
+        </div>
+        <div style={{ padding: 14 }}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
 function safeNum(v) {
   if (v == null || v === "") return null;
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
+}
+
+function YachtClubSelect({ value, onChange }) {
+  const [q, setQ] = useState("");
+  const [options, setOptions] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+    const t = setTimeout(async () => {
+      try {
+        const list = await searchYachtClubs(q);
+        if (mounted) setOptions(list);
+      } catch {
+        if (mounted) setOptions([]);
+      }
+    }, 250);
+
+    return () => {
+      mounted = false;
+      clearTimeout(t);
+    };
+  }, [q]);
+
+  return (
+    <div
+      style={{
+        border: "1px solid #e5e5e5",
+        borderRadius: 12,
+        padding: 10,
+        background: "white",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+        <div style={{ fontWeight: 650 }}>{value || "None Selected"}</div>
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          style={{
+            padding: "6px 8px",
+            borderRadius: 10,
+            border: "1px solid #ccc",
+            background: "white",
+            cursor: "pointer",
+          }}
+        >
+          Clear
+        </button>
+      </div>
+
+      <div style={{ marginTop: 8 }}>
+        <input
+          value={q}
+          onChange={(e) => {
+            const next = e.target.value;
+            setQ(next);
+            const picked = options.find(
+              (c) =>
+                `${c.name}${c.state ? `, ${c.state}` : ""}`.toLowerCase() ===
+                String(next || "").toLowerCase()
+            );
+            if (picked) {
+              onChange(`${picked.name}${picked.state ? `, ${picked.state}` : ""}`);
+            }
+          }}
+          onBlur={(e) => {
+            const picked = options.find(
+              (c) =>
+                `${c.name}${c.state ? `, ${c.state}` : ""}`.toLowerCase() ===
+                String(e.target.value || "").toLowerCase()
+            );
+            if (picked) {
+              onChange(`${picked.name}${picked.state ? `, ${picked.state}` : ""}`);
+            }
+          }}
+          placeholder="Search Clubs (e.g. Sandringham, RPYC, Blairgowrie)..."
+          list="boat-home-clubs"
+          style={{
+            width: "100%",
+            padding: "10px 12px",
+            borderRadius: 10,
+            border: "1px solid #ddd",
+          }}
+        />
+        <datalist id="boat-home-clubs">
+          {options.map((club) => {
+            const label = `${club.name}${club.state ? `, ${club.state}` : ""}`;
+            return <option key={club.id} value={label} />;
+          })}
+        </datalist>
+      </div>
+    </div>
+  );
 }
 
 export default function MyBoats({ profileType }) {
@@ -105,6 +244,7 @@ export default function MyBoats({ profileType }) {
   const [busy, setBusy] = useState(false);
 
   const [editingId, setEditingId] = useState(null);
+  const [formOpen, setFormOpen] = useState(false);
 
   const [name, setName] = useState("");
   const [boatType, setBoatType] = useState("keelboat");
@@ -152,13 +292,14 @@ export default function MyBoats({ profileType }) {
     setLengthM(b.length_m != null ? String(b.length_m) : "");
     setHomePort(b.home_port ?? "");
     setOffshore(!!b.is_offshore_capable);
+    setFormOpen(true);
   }
 
   async function save() {
     setErr(null);
 
     if (!name.trim()) {
-      setErr("Boat name is required.");
+      setErr("Boat Name Is Required.");
       return;
     }
 
@@ -176,10 +317,11 @@ export default function MyBoats({ profileType }) {
       if (editingId) {
         await updateBoat(editingId, payload);
       } else {
-        await createBoat(payload);
+        await createBoat({ ...payload, owner_id: user.id });
       }
       await load();
       resetForm();
+      setFormOpen(false);
     } catch (e) {
       setErr(e.message ?? String(e));
     } finally {
@@ -188,7 +330,7 @@ export default function MyBoats({ profileType }) {
   }
 
   async function remove(id) {
-    if (!confirm("Delete this boat? If it is linked to events, deletion may fail.")) return;
+    if (!confirm("Delete This Boat? If It Is Linked To Events, Deletion May Fail.")) return;
     setBusy(true);
     setErr(null);
     try {
@@ -210,7 +352,7 @@ export default function MyBoats({ profileType }) {
         <Card>
           <h3 style={{ marginTop: 0 }}>Boats</h3>
           <div style={{ fontSize: 12, opacity: 0.75 }}>
-            Boats are available for <b>owner</b> accounts.
+            Boats Are Available For <b>Owner</b> Accounts.
           </div>
         </Card>
       </div>
@@ -223,72 +365,31 @@ export default function MyBoats({ profileType }) {
         <div>
           <h3 style={{ margin: 0 }}>Boats</h3>
           <div style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
-            Create your boat first. Events will require selecting a boat.
+            Create Your Boat First. Events Will Require Selecting A Boat.
           </div>
         </div>
 
-        <button onClick={load} disabled={loading} style={{ padding: "8px 12px", borderRadius: 10 }}>
-          {loading ? "Refreshing…" : "Refresh"}
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={() => {
+              resetForm();
+              setFormOpen(true);
+            }}
+            style={{ padding: "8px 12px", borderRadius: 10 }}
+          >
+            + Add Boat
+          </button>
+          <button onClick={load} disabled={loading} style={{ padding: "8px 12px", borderRadius: 10 }}>
+            {loading ? "Refreshing…" : "Refresh"}
+          </button>
+        </div>
       </div>
 
       {err && <div style={{ color: "crimson", marginTop: 12 }}>{err}</div>}
 
       <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
         <Card>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-            <div style={{ fontWeight: 900, color: "#0b2440" }}>{isEditing ? "Edit boat" : "Add a boat"}</div>
-            {isEditing && (
-              <GhostButton disabled={busy} onClick={resetForm}>
-                Cancel
-              </GhostButton>
-            )}
-          </div>
-
-          <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <Field label="Boat name *">
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Wild Oats" />
-            </Field>
-
-            <Field label="Boat type">
-              <Select value={boatType} onChange={(e) => setBoatType(e.target.value)}>
-                <option value="keelboat">Keelboat</option>
-                <option value="dinghy">Dinghy</option>
-                <option value="catamaran">Catamaran</option>
-                <option value="yacht">Yacht</option>
-                <option value="sportsboat">Sportsboat</option>
-              </Select>
-            </Field>
-
-            <Field label="Class">
-              <Input value={klass} onChange={(e) => setKlass(e.target.value)} placeholder="e.g. Farr 40 / J/70" />
-            </Field>
-
-            <Field label="Length (m)">
-              <Input value={lengthM} onChange={(e) => setLengthM(e.target.value)} placeholder="e.g. 10.5" />
-            </Field>
-
-            <Field label="Home port">
-              <Input value={homePort} onChange={(e) => setHomePort(e.target.value)} placeholder="e.g. Melbourne" />
-            </Field>
-
-            <Field label="Offshore capable">
-              <label style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <input type="checkbox" checked={offshore} onChange={(e) => setOffshore(e.target.checked)} />
-                <span style={{ fontSize: 13, opacity: 0.85 }}>Yes</span>
-              </label>
-            </Field>
-          </div>
-
-          <div style={{ marginTop: 12 }}>
-            <PrimaryButton disabled={busy} onClick={save}>
-              {busy ? "Saving…" : isEditing ? "Save changes" : "Add boat"}
-            </PrimaryButton>
-          </div>
-        </Card>
-
-        <Card>
-          <div style={{ fontWeight: 900, color: "#0b2440" }}>My boats</div>
+          <div style={{ fontWeight: 900, color: "#0b2440" }}>My Boats</div>
 
           <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
             {boats.map((b) => (
@@ -328,12 +429,65 @@ export default function MyBoats({ profileType }) {
 
             {!boats.length && (
               <div style={{ opacity: 0.75, padding: 12, border: "1px dashed #ddd", borderRadius: 12 }}>
-                No boats yet. Add your first boat above.
+                No Boats Yet. Add Your First Boat Above.
               </div>
             )}
           </div>
         </Card>
       </div>
+
+      <Modal
+        open={formOpen}
+        title={isEditing ? "Edit Boat" : "Add A Boat"}
+        onClose={() => {
+          if (busy) return;
+          setFormOpen(false);
+        }}
+      >
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <Field label="Boat Name *">
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Wild Oats" />
+          </Field>
+
+          <Field label="Boat Type">
+            <Select value={boatType} onChange={(e) => setBoatType(e.target.value)}>
+              <option value="keelboat">Keelboat</option>
+              <option value="dinghy">Dinghy</option>
+              <option value="catamaran">Catamaran</option>
+              <option value="yacht">Yacht</option>
+              <option value="sportsboat">Sportsboat</option>
+            </Select>
+          </Field>
+
+          <Field label="Class">
+            <Input value={klass} onChange={(e) => setKlass(e.target.value)} placeholder="e.g. Farr 40 / J/70" />
+          </Field>
+
+          <Field label="Length (M)">
+            <Input value={lengthM} onChange={(e) => setLengthM(e.target.value)} placeholder="e.g. 10.5" />
+          </Field>
+
+          <Field label="Home Club">
+            <YachtClubSelect value={homePort} onChange={setHomePort} />
+          </Field>
+
+          <Field label="Offshore Capable">
+            <label style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <input type="checkbox" checked={offshore} onChange={(e) => setOffshore(e.target.checked)} />
+              <span style={{ fontSize: 13, opacity: 0.85 }}>Yes</span>
+            </label>
+          </Field>
+        </div>
+
+        <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 8 }}>
+          <GhostButton disabled={busy} onClick={() => setFormOpen(false)}>
+            Cancel
+          </GhostButton>
+          <PrimaryButton disabled={busy} onClick={save}>
+            {busy ? "Saving…" : isEditing ? "Save Changes" : "Add Boat"}
+          </PrimaryButton>
+        </div>
+      </Modal>
     </div>
   );
 }

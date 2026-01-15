@@ -85,7 +85,7 @@ export default function DiscoverEvents({ user, profile, setRoute }) {
     }
 
     if (profile?.sailor_suspended || profile?.is_suspended) {
-      alert("Your account is currently suspended.");
+      alert("Your Account Is Currently Suspended.");
       return;
     }
 
@@ -103,15 +103,15 @@ export default function DiscoverEvents({ user, profile, setRoute }) {
     }
   }
 
-  if (loading) return <div style={{ padding: 24 }}>Loading events...</div>;
+  if (loading) return <div style={{ padding: 24 }}>Loading Events...</div>;
   if (err) return <div style={{ padding: 24, color: "crimson" }}>{err}</div>;
 
   return (
     <div style={{ maxWidth: 980, margin: "0 auto", padding: 24 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "end" }}>
         <div>
-          <h1 style={{ marginBottom: 6 }}>Discover events</h1>
-          <div style={{ opacity: 0.8 }}>Published events looking for crew.</div>
+          <h1 style={{ marginBottom: 6 }}>Discover Events</h1>
+          <div style={{ opacity: 0.8 }}>Published Events Looking For Crew.</div>
         </div>
 
         {needsSailorOnboarding(profile) && (
@@ -119,7 +119,7 @@ export default function DiscoverEvents({ user, profile, setRoute }) {
             onClick={() => setRoute?.(ROUTES.SAILOR_ONBOARDING)}
             style={{ padding: "10px 12px", borderRadius: 12, border: "1px solid #ccc", background: "white" }}
           >
-            Finish profile to apply
+            Finish Profile To Apply
           </button>
         )}
       </div>
@@ -189,7 +189,7 @@ export default function DiscoverEvents({ user, profile, setRoute }) {
 
                 <div style={{ textAlign: "right", minWidth: 140 }}>
                   <div style={{ fontWeight: 650 }}>
-                    {left} spot{left === 1 ? "" : "s"} left
+                    {left} Spot{left === 1 ? "" : "s"} Left
                   </div>
 
                   <button
@@ -214,7 +214,7 @@ export default function DiscoverEvents({ user, profile, setRoute }) {
         })}
       </div>
 
-      {events.length === 0 && <div style={{ marginTop: 18, opacity: 0.8 }}>No published events yet.</div>}
+      {events.length === 0 && <div style={{ marginTop: 18, opacity: 0.8 }}>No Published Events Yet.</div>}
     </div>
   );
 }

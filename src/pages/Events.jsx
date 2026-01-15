@@ -3,6 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useSession } from "../hooks/useSession";
 import { supabase } from "../lib/supabase";
 import { fetchOwnerEventsSummary, ownerSetEventStatus } from "../api/events";
+import Badge from "../components/ui/Badge";
+import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
+import YachtClubPicker from "../components/YachtClubPicker";
 
 function fmtBoat(b) {
   if (!b) return "—";
@@ -29,56 +33,11 @@ function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
 }
 
-function Pill({ children, tone = "muted" }) {
-  const cls =
-    tone === "status"
-      ? "pill pillStatus"
-      : tone === "good"
-      ? "pill pillGood"
-      : tone === "warn"
-      ? "pill pillWarn"
-      : tone === "bad"
-      ? "pill pillBad"
-      : "pill pillMuted";
-  return <span className={cls}>{children}</span>;
-}
-
-function Chip({ children, tone }) {
-  const t = tone || { bg: "#f3f4f6", border: "#e5e7eb", text: "#374151" };
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        padding: "6px 10px",
-        borderRadius: 999,
-        border: `1px solid ${t.border}`,
-        background: t.bg,
-        color: t.text,
-        fontSize: 12,
-        fontWeight: 800,
-        whiteSpace: "nowrap",
-      }}
-    >
-      {children}
-    </span>
-  );
-}
-
-function Metric({ label, value, tone }) {
-  return (
-    <div className={`metric metric-${tone || "muted"}`}>
-      <div className="metricLabel">{label}</div>
-      <div className="metricValue">{value}</div>
-    </div>
-  );
-}
-
 function statusTone(status) {
   const s = String(status || "draft").toLowerCase();
-  if (s === "published") return { bg: "#dcfce7", border: "#86efac", text: "#166534" };
-  if (s === "closed") return { bg: "#f3f4f6", border: "#e5e7eb", text: "#374151" };
-  return { bg: "#eef2ff", border: "#c7d2fe", text: "#3730a3" };
+  if (s === "published") return "success";
+  if (s === "closed") return "muted";
+  return "warning";
 }
 
 function EventCard({ e, onManageCrew, onSetStatus, busyEventId }) {
@@ -99,115 +58,100 @@ function EventCard({ e, onManageCrew, onSetStatus, busyEventId }) {
       ? clamp((filled / reqNum) * 100, 0, 100)
       : 0;
 
-  const statusText = String(e.status ?? "draft").toUpperCase();
   const sLower = String(e.status ?? "draft").toLowerCase();
+  const statusText = sLower ? sLower[0].toUpperCase() + sLower.slice(1) : "Draft";
 
   return (
-    <div className="card eventCard">
-      <div className="eventTop">
-        <div className="eventMain">
-          <div className="eventTitleRow">
-            <div className="eventTitle">{e.title ?? "Untitled event"}</div>
-            <Chip tone={statusTone(e.status)}>Status: {statusText}</Chip>
-            {!!e.boat?.is_offshore_capable && <Pill tone="muted">Offshore</Pill>}
-          </div>
-
-          <div className="eventSub">
-            <span className="eventSubItem">{fmtWhen(e)}</span>
-            <span className="dot">•</span>
-            <span className="eventSubItem">{e.location_text ?? "—"}</span>
-            <span className="dot">•</span>
-            <span className="eventSubItem">Boat: {fmtBoat(e.boat)}</span>
-          </div>
-
-          <div className="crewBlock">
-            <div className="crewLine">
-              <div className="crewLabel">Crew</div>
-              {reqNum != null && Number.isFinite(reqNum) ? (
-                <div className="crewValue">
-                  <b>{filled}</b> / {reqNum} filled{" "}
-                  <span className="crewMuted">
-                    ({spotsLeft === 0 ? "0 spots left" : `${spotsLeft} spots left`})
-                  </span>
-                </div>
-              ) : (
-                <div className="crewValue">
-                  <b>{filled}</b> accepted <span className="crewMuted">(crew required not set)</span>
-                </div>
-              )}
+    <Card>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 16 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-0.02em" }}>
+              {e.title ?? "Untitled Event"}
             </div>
+            <Badge tone={statusTone(e.status)}>Status: {statusText}</Badge>
+            {!!e.boat?.is_offshore_capable && <Badge tone="info">Offshore</Badge>}
+          </div>
 
-            <div className="progressTrack" aria-hidden="true">
-              <div className="progressFill" style={{ width: `${progressPct}%` }} />
+          <div className="subtle" style={{ marginTop: 6 }}>
+            {fmtWhen(e)} • {e.location_text ?? "—"} • Boat: {fmtBoat(e.boat)}
+          </div>
+
+          <div style={{ marginTop: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: "var(--muted)" }}>Crew</div>
+            {reqNum != null && Number.isFinite(reqNum) ? (
+              <div style={{ marginTop: 6 }}>
+                <b>{filled}</b> / {reqNum} Filled{" "}
+                <span className="subtle">
+                  ({spotsLeft === 0 ? "0 Spots Left" : `${spotsLeft} Spots Left`})
+                </span>
+              </div>
+            ) : (
+              <div style={{ marginTop: 6 }}>
+                <b>{filled}</b> Accepted{" "}
+                <span className="subtle">(Crew Required Not Set)</span>
+              </div>
+            )}
+
+            <div
+              aria-hidden="true"
+              style={{
+                marginTop: 8,
+                height: 10,
+                borderRadius: 999,
+                background: "var(--panel-2)",
+                overflow: "hidden",
+                border: "1px solid var(--border)",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${progressPct}%`,
+                  background: "var(--accent)",
+                  borderRadius: 999,
+                }}
+              />
             </div>
           </div>
 
-          <div className="metricsRow">
-            <Metric label="Invited" value={invited} tone="info" />
-            <Metric label="Applied" value={applied} tone="warn" />
-            <Metric label="Accepted" value={accepted} tone="good" />
-            <Metric label="Declined" value={declined} tone="bad" />
+          <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <Badge tone="info">Invited: {invited}</Badge>
+            <Badge tone="warning">Applied: {applied}</Badge>
+            <Badge tone="success">Accepted: {accepted}</Badge>
+            <Badge tone="danger">Declined: {declined}</Badge>
           </div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 180 }}>
-          <button
-            onClick={() => onManageCrew?.(e.id)}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 10,
-              border: "1px solid #0b2440",
-              background: "#0b2440",
-              color: "white",
-              fontWeight: 900,
-              cursor: "pointer",
-            }}
-          >
-            Manage crew
-          </button>
+          <Button variant="secondary" onClick={() => onManageCrew?.(e.id)}>
+            Manage Crew
+          </Button>
 
           {sLower !== "published" ? (
-            <button
+            <Button
+              variant="secondary"
               disabled={busyEventId === e.id}
               onClick={() => onSetStatus?.(e.id, "published")}
-              style={{
-                padding: "10px 14px",
-                borderRadius: 10,
-                border: "1px solid #16a34a",
-                background: "#dcfce7",
-                color: "#166534",
-                fontWeight: 900,
-                cursor: busyEventId === e.id ? "not-allowed" : "pointer",
-                opacity: busyEventId === e.id ? 0.7 : 1,
-              }}
             >
               {busyEventId === e.id ? "Publishing…" : "Publish"}
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
+              variant="ghost"
               disabled={busyEventId === e.id}
               onClick={() => onSetStatus?.(e.id, "closed")}
-              style={{
-                padding: "10px 14px",
-                borderRadius: 10,
-                border: "1px solid #ddd",
-                background: "#f3f4f6",
-                color: "#111827",
-                fontWeight: 900,
-                cursor: busyEventId === e.id ? "not-allowed" : "pointer",
-                opacity: busyEventId === e.id ? 0.7 : 1,
-              }}
             >
-              {busyEventId === e.id ? "Closing…" : "Close event"}
-            </button>
+              {busyEventId === e.id ? "Closing…" : "Close Event"}
+            </Button>
           )}
 
-          <div style={{ fontSize: 11, opacity: 0.7, lineHeight: 1.2 }}>
-            Draft events are hidden. Publish makes them Open and actionable.
+          <div className="subtle" style={{ fontSize: 11, lineHeight: 1.2 }}>
+            Draft Events Are Hidden. Publish Makes Them Open And Actionable.
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -228,22 +172,27 @@ function Modal({ open, title, children, onClose }) {
         if (e.target === e.currentTarget) onClose?.();
       }}
     >
-      <div
+      <Card
         style={{
           width: "min(720px, 100%)",
-          background: "white",
-          borderRadius: 16,
-          border: "1px solid #e5e7eb",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
           overflow: "hidden",
         }}
       >
-        <div style={{ padding: 14, borderBottom: "1px solid #eef2f7", display: "flex", justifyContent: "space-between" }}>
-          <div style={{ fontWeight: 900, color: "#0b2440" }}>{title}</div>
-          <button className="btnGhost" onClick={onClose}>✕</button>
+        <div
+          style={{
+            padding: 14,
+            borderBottom: "1px solid var(--border)",
+            display: "flex",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ fontWeight: 900 }}>{title}</div>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            ✕
+          </Button>
         </div>
         <div style={{ padding: 14 }}>{children}</div>
-      </div>
+      </Card>
     </div>
   );
 }
@@ -268,6 +217,7 @@ export default function Events({ profileType, onManageCrew }) {
   const [startDate, setStartDate] = useState(""); // YYYY-MM-DD
   const [endDate, setEndDate] = useState("");
   const [locationText, setLocationText] = useState("");
+  const [locationId, setLocationId] = useState(null);
   const [crewRequired, setCrewRequired] = useState(5);
   const [publishNow, setPublishNow] = useState(false);
 
@@ -329,12 +279,13 @@ export default function Events({ profileType, onManageCrew }) {
 
   function openCreate() {
     if (!hasBoats) {
-      setErr("Create a boat first, then you can create an event.");
+      setErr("Create A Boat First, Then You Can Create An Event.");
       return;
     }
     // reset form defaults
     setTitle("");
     setLocationText("");
+    setLocationId(null);
     setStartDate("");
     setEndDate("");
     setCrewRequired(5);
@@ -347,18 +298,24 @@ export default function Events({ profileType, onManageCrew }) {
     if (!user?.id) return;
     setErr(null);
 
+    const locText = (locationText ?? "").trim();
+
     if (!boatId) {
-      setErr("Pick a boat for this event.");
+      setErr("Pick A Boat For This Event.");
       return;
     }
     if (!title.trim()) {
-      setErr("Event title is required.");
+      setErr("Event Title Is Required.");
+      return;
+    }
+    if (!locText) {
+      setErr("Please Choose A Location (Club/Port).");
       return;
     }
 
     const cr = Number(crewRequired);
     if (!Number.isFinite(cr) || cr < 0) {
-      setErr("Crew required must be 0 or more.");
+      setErr("Crew Required Must Be 0 Or More.");
       return;
     }
 
@@ -372,7 +329,8 @@ export default function Events({ profileType, onManageCrew }) {
         title: title.trim(),
         start_date: startDate || null,
         end_date: endDate || null,
-        location_text: locationText.trim() || null,
+        location_text: locText,
+        location_id: locationId ?? null,
         crew_required: cr,
         status,
       });
@@ -392,46 +350,54 @@ export default function Events({ profileType, onManageCrew }) {
 
   if (!isOwner) {
     return (
-      <div className="page">
-        <div className="pageHeader">
+      <div style={{ display: "grid", gap: 12 }}>
+        <Card>
           <div>
-            <h3 className="h3">Events</h3>
-            <div className="subtext">
-              Events are managed by <b>owners</b>. Switch your profile type to owner (or both) to create events.
+            <div style={{ fontSize: 18, fontWeight: 800 }}>Events</div>
+            <div className="subtle" style={{ marginTop: 6 }}>
+              Events Are Managed By <b>Owners</b>. Switch Your Profile Type To Owner (Or Both) To Create Events.
             </div>
           </div>
-        </div>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="page">
-      <div className="pageHeader">
-        <div>
-          <h3 className="h3">Events</h3>
-          <div className="subtext">Draft → Publish (Open) → Close. Build crew without chaos.</div>
-        </div>
+    <div style={{ display: "grid", gap: 14 }}>
+      <Card>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 800 }}>Events</div>
+            <div className="subtle" style={{ marginTop: 6 }}>
+              Draft → Publish (Open) → Close. Build Crew Without Chaos.
+            </div>
+          </div>
 
-        <div className="headerActions">
-          <button className="btnGhost" onClick={openCreate}>
-            + New event
-          </button>
-          <button className="btnGhost" onClick={load} disabled={loading}>
-            {loading ? "Refreshing…" : "Refresh"}
-          </button>
+          <div style={{ display: "flex", gap: 10 }}>
+            <Button variant="ghost" onClick={openCreate}>
+              + New Event
+            </Button>
+            <Button variant="ghost" onClick={load} disabled={loading}>
+              {loading ? "Refreshing…" : "Refresh"}
+            </Button>
+          </div>
         </div>
-      </div>
+      </Card>
 
-      {err && <div className="error">{err}</div>}
-
-      {!hasEvents && !loading && (
-        <div className="empty">
-          No events yet. Create a boat first, then create an event to start building crew.
-        </div>
+      {err && (
+        <Card>
+          <div style={{ color: "var(--danger)", fontWeight: 700 }}>{err}</div>
+        </Card>
       )}
 
-      <div className="grid">
+      {!hasEvents && !loading && (
+        <Card>
+          No Events Yet. Create A Boat First, Then Create An Event To Start Building Crew.
+        </Card>
+      )}
+
+      <div style={{ display: "grid", gap: 12 }}>
         {rows.map((e) => (
           <EventCard
             key={e.id}
@@ -445,7 +411,7 @@ export default function Events({ profileType, onManageCrew }) {
 
       <Modal
         open={createOpen}
-        title="Create event"
+        title="Create Event"
         onClose={() => {
           if (createBusy) return;
           setCreateOpen(false);
@@ -453,23 +419,21 @@ export default function Events({ profileType, onManageCrew }) {
       >
         <div style={{ display: "grid", gap: 12 }}>
           <div style={{ display: "grid", gap: 6 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "#0b2440" }}>Title</div>
+            <div style={{ fontSize: 12, fontWeight: 800 }}>Title</div>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Saturday Bay race"
-              style={{ padding: 10, borderRadius: 12, border: "1px solid #e5e7eb" }}
+              placeholder="e.g. Saturday Bay Race"
             />
           </div>
 
           <div style={{ display: "grid", gap: 6 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "#0b2440" }}>Boat</div>
+            <div style={{ fontSize: 12, fontWeight: 800 }}>Boat</div>
             <select
               value={boatId}
               onChange={(e) => setBoatId(e.target.value)}
-              style={{ padding: 10, borderRadius: 12, border: "1px solid #e5e7eb" }}
             >
-              {!boats.length && <option value="">No boats found</option>}
+              {!boats.length && <option value="">No Boats Found</option>}
               {boats.map((b) => (
                 <option key={b.id} value={b.id}>
                   {fmtBoat(b)}{b.is_offshore_capable ? " • Offshore" : ""}
@@ -480,52 +444,57 @@ export default function Events({ profileType, onManageCrew }) {
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div style={{ display: "grid", gap: 6 }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: "#0b2440" }}>Start date</div>
+              <div style={{ fontSize: 12, fontWeight: 800 }}>Start Date</div>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                style={{ padding: 10, borderRadius: 12, border: "1px solid #e5e7eb" }}
               />
             </div>
             <div style={{ display: "grid", gap: 6 }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: "#0b2440" }}>End date</div>
+              <div style={{ fontSize: 12, fontWeight: 800 }}>End Date</div>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                style={{ padding: 10, borderRadius: 12, border: "1px solid #e5e7eb" }}
               />
             </div>
           </div>
 
           <div style={{ display: "grid", gap: 6 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "#0b2440" }}>Location</div>
-            <input
+            <div style={{ fontSize: 12, fontWeight: 800 }}>Location</div>
+            <YachtClubPicker
               value={locationText}
-              onChange={(e) => setLocationText(e.target.value)}
-              placeholder="e.g. Sandringham Yacht Club"
-              style={{ padding: 10, borderRadius: 12, border: "1px solid #e5e7eb" }}
+              onChangeText={setLocationText}
+              onSelectLocation={(loc) => {
+                setLocationId(loc?.id ?? null);
+                setLocationText(loc?.name ?? "");
+              }}
+              placeholder="Search Clubs Or Locations..."
             />
+            {locationText ? (
+              <div className="subtle" style={{ marginTop: 6 }}>
+                Selected Location: <b>{locationText}</b>
+              </div>
+            ) : null}
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div style={{ display: "grid", gap: 6 }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: "#0b2440" }}>Crew required</div>
+              <div style={{ fontSize: 12, fontWeight: 800 }}>Crew Required</div>
               <input
                 type="number"
                 min={0}
                 value={crewRequired}
                 onChange={(e) => setCrewRequired(Number(e.target.value))}
-                style={{ padding: 10, borderRadius: 12, border: "1px solid #e5e7eb" }}
               />
               <div style={{ fontSize: 11, opacity: 0.7 }}>
-                Used for “filled / required” and to prevent over-accepting.
+                Used For “Filled / Required” And To Prevent Over-Accepting.
               </div>
             </div>
 
             <div style={{ display: "grid", gap: 10, alignContent: "start" }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: "#0b2440" }}>Visibility</div>
+              <div style={{ fontSize: 12, fontWeight: 800 }}>Visibility</div>
               <label style={{ display: "flex", gap: 10, alignItems: "center" }}>
                 <input
                   type="checkbox"
@@ -533,9 +502,9 @@ export default function Events({ profileType, onManageCrew }) {
                   onChange={(e) => setPublishNow(e.target.checked)}
                 />
                 <div>
-                  <div style={{ fontWeight: 800, color: "#0b2440" }}>Publish now (Open)</div>
+                  <div style={{ fontWeight: 800 }}>Publish Now (Open)</div>
                   <div style={{ fontSize: 11, opacity: 0.7 }}>
-                    If off, event is Draft (hidden) until you publish.
+                    If Off, Event Is Draft (Hidden) Until You Publish.
                   </div>
                 </div>
               </label>
@@ -543,25 +512,12 @@ export default function Events({ profileType, onManageCrew }) {
           </div>
 
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
-            <button className="btnGhost" disabled={createBusy} onClick={() => setCreateOpen(false)}>
+            <Button variant="ghost" disabled={createBusy} onClick={() => setCreateOpen(false)}>
               Cancel
-            </button>
-            <button
-              disabled={createBusy}
-              onClick={createEvent}
-              style={{
-                padding: "10px 14px",
-                borderRadius: 10,
-                border: "1px solid #0b2440",
-                background: "#0b2440",
-                color: "white",
-                fontWeight: 900,
-                cursor: createBusy ? "not-allowed" : "pointer",
-                opacity: createBusy ? 0.8 : 1,
-              }}
-            >
-              {createBusy ? "Creating…" : publishNow ? "Create & Publish" : "Create draft"}
-            </button>
+            </Button>
+            <Button disabled={createBusy} onClick={createEvent}>
+              {createBusy ? "Creating…" : publishNow ? "Create & Publish" : "Create Draft"}
+            </Button>
           </div>
         </div>
       </Modal>

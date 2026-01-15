@@ -13,8 +13,8 @@ export default function UpgradeButton({ userId, planTier }) {
         body: JSON.stringify({ userId }),
       });
       const j = await res.json();
-      if (!res.ok) throw new Error(j.error || "Checkout failed");
-      if (!j.url) throw new Error("Missing checkout url");
+      if (!res.ok) throw new Error(j.error || "Checkout Failed");
+      if (!j.url) throw new Error("Missing Checkout Url");
       window.location.href = j.url;
     } catch (e) {
       alert(e.message ?? String(e));
@@ -23,11 +23,11 @@ export default function UpgradeButton({ userId, planTier }) {
     }
   }
 
-  if (isPro) return <span style={{ fontSize: 12, opacity: 0.8 }}>✅ Owner Pro active</span>;
+  if (isPro) return <span style={{ fontSize: 12, opacity: 0.8 }}>✅ Owner Pro Active</span>;
 
   return (
     <button onClick={startCheckout} disabled={busy || !userId}>
-      {busy ? "Redirecting…" : "Upgrade to Owner Pro"}
+      {busy ? "Redirecting…" : "Upgrade To Owner Pro"}
     </button>
   );
 }

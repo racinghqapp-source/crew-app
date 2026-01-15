@@ -169,13 +169,13 @@ export default function MyEvents({ profileType, onNavigate }) {
     return (
       <div style={{ marginTop: 12 }}>
         <Card>
-          <h3 style={{ marginTop: 0 }}>Events</h3>
-          <div style={{ fontSize: 12, opacity: 0.75 }}>
-            Events are for <b>owner</b> accounts.
-          </div>
-        </Card>
-      </div>
-    );
+        <h3 style={{ marginTop: 0 }}>Events</h3>
+        <div style={{ fontSize: 12, opacity: 0.75 }}>
+            Events Are For <b>Owner</b> Accounts.
+        </div>
+      </Card>
+    </div>
+  );
   }
 
   return (
@@ -183,7 +183,7 @@ export default function MyEvents({ profileType, onNavigate }) {
       <div>
         <h3 style={{ margin: 0 }}>Events</h3>
         <div style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
-          Step 2 for owners: pick a boat → create an event → publish → invite sailors from Discovery.
+          Step 2 For Owners: Pick A Boat → Create An Event → Publish → Invite Sailors From Discovery.
         </div>
       </div>
 
@@ -192,15 +192,15 @@ export default function MyEvents({ profileType, onNavigate }) {
       {/* Create event */}
       <Card>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-          <div style={{ fontWeight: 900, color: "#0b2440" }}>Create event</div>
+          <div style={{ fontWeight: 900, color: "#0b2440" }}>Create Event</div>
           <div style={{ fontSize: 12, opacity: 0.7 }}>{loading ? "Working…" : ""}</div>
         </div>
 
         {!boats.length ? (
           <div style={{ marginTop: 12, padding: 12, border: "1px dashed #ddd", borderRadius: 12, opacity: 0.85 }}>
-            You need a boat before you can create events.
+            You Need A Boat Before You Can Create Events.
             <div style={{ marginTop: 10 }}>
-              <PrimaryButton onClick={() => onNavigate?.("boats")}>Go to Boats</PrimaryButton>
+              <PrimaryButton onClick={() => onNavigate?.("boats")}>Go To Boats</PrimaryButton>
             </div>
           </div>
         ) : (
@@ -225,10 +225,10 @@ export default function MyEvents({ profileType, onNavigate }) {
                 />
               </Field>
 
-              <Field label="Event type">
+              <Field label="Event Type">
                 <select value={eventType} onChange={(e) => setEventType(e.target.value)} style={{ padding: 10, borderRadius: 10 }}>
                   <option value="regatta">Regatta</option>
-                  <option value="race_week">Race week</option>
+                  <option value="race_week">Race Week</option>
                   <option value="delivery">Delivery</option>
                   <option value="training">Training</option>
                   <option value="offshore">Offshore</option>
@@ -246,10 +246,10 @@ export default function MyEvents({ profileType, onNavigate }) {
             </Field>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-              <Field label="Start date">
+              <Field label="Start Date">
                 <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ padding: 10, borderRadius: 10 }} />
               </Field>
-              <Field label="End date">
+              <Field label="End Date">
                 <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ padding: 10, borderRadius: 10 }} />
               </Field>
               <Field label="Status">
@@ -262,16 +262,16 @@ export default function MyEvents({ profileType, onNavigate }) {
 
             <div style={{ display: "flex", gap: 10 }}>
               <PrimaryButton disabled={!canCreate || loading} onClick={createEvent}>
-                Create event
+                Create Event
               </PrimaryButton>
               <SecondaryButton onClick={() => onNavigate?.("discover")}>
-                Go to Discovery
+                Go To Discovery
               </SecondaryButton>
             </div>
 
             {!canCreate && (
               <div style={{ fontSize: 12, opacity: 0.7 }}>
-                Required: boat, title, location, start date, end date.
+                Required: Boat, Title, Location, Start Date, End Date.
               </div>
             )}
           </div>
@@ -280,10 +280,10 @@ export default function MyEvents({ profileType, onNavigate }) {
 
       {/* Existing events */}
       <Card>
-        <div style={{ fontWeight: 900, color: "#0b2440" }}>Your events</div>
+        <div style={{ fontWeight: 900, color: "#0b2440" }}>Your Events</div>
 
         {!events.length ? (
-          <div style={{ marginTop: 10, opacity: 0.75 }}>No events yet.</div>
+          <div style={{ marginTop: 10, opacity: 0.75 }}>No Events Yet.</div>
         ) : (
           <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
             {events.map((ev) => {

@@ -76,6 +76,16 @@ export default function Discovery({ profileType, profile, onOpenEvent }) {
     return m;
   }, [myApps]);
 
+  function appLabel(app) {
+    const s = String(app?.status || "");
+    if (s === "shortlisted") return "Invited";
+    if (s === "applied") return "Applied";
+    if (s === "accepted") return "Accepted";
+    if (s === "declined") return "Declined";
+    if (s === "withdrawn") return "Withdrawn";
+    return s || "Applied";
+  }
+
   // ----- Owner: crew mock (existing) -----
   const [filter, setFilter] = useState("all");
   const crew = mockCrew.filter((c) => {
@@ -100,7 +110,7 @@ export default function Discovery({ profileType, profile, onOpenEvent }) {
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
             <div>
               <div style={{ fontWeight: 800, fontSize: 16 }}>Event Discovery</div>
-              <div className="subtle">Browse published events and apply in one click.</div>
+              <div className="subtle">Browse Published Events And Apply In One Click.</div>
             </div>
             <button className="btn btnGhost" onClick={loadSailorData} disabled={loading}>
               {loading ? "Refreshing…" : "Refresh"}
@@ -119,12 +129,12 @@ export default function Discovery({ profileType, profile, onOpenEvent }) {
         </div>
 
         {loading ? (
-          <div className="card">Loading events…</div>
+          <div className="card">Loading Events…</div>
         ) : events.length === 0 ? (
           <div className="card">
-            <div style={{ fontWeight: 700 }}>No published events yet</div>
+            <div style={{ fontWeight: 700 }}>No Published Events Yet</div>
             <div className="subtle" style={{ marginTop: 6 }}>
-              Check back soon — skippers will publish events here.
+              Check Back Soon — Skippers Will Publish Events Here.
             </div>
           </div>
         ) : (
@@ -133,7 +143,7 @@ export default function Discovery({ profileType, profile, onOpenEvent }) {
               {events.map((e) => {
                 const existingApp = myAppByEventId.get(e.id);
                 const alreadyApplied = Boolean(existingApp);
-                const appStatus = existingApp?.status;
+                const appStatus = appLabel(existingApp);
 
                 const crewFilled = Number(e.crew_filled ?? 0);
                 const crewReq = Number(e.crew_required ?? 0);
@@ -156,7 +166,7 @@ export default function Discovery({ profileType, profile, onOpenEvent }) {
                     <div style={{ minWidth: 0 }}>
                       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
                         <div style={{ fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {e.title || "Untitled event"}
+                          {e.title || "Untitled Event"}
                         </div>
                         <Badge tone="muted">{e.event_type || "Event"}</Badge>
                         {full ? <Badge tone="red">Full</Badge> : <Badge tone="green">Open</Badge>}
@@ -167,11 +177,9 @@ export default function Discovery({ profileType, profile, onOpenEvent }) {
                               padding: "4px 10px",
                               borderRadius: 999,
                               fontWeight: 800,
-                              textTransform: "uppercase",
-                              letterSpacing: "0.04em",
                             }}
                           >
-                            Applied
+                            {appStatus}
                           </span>
                         ) : null}
                       </div>
@@ -223,7 +231,7 @@ export default function Discovery({ profileType, profile, onOpenEvent }) {
       >
         <div>
           <div style={{ fontWeight: 700 }}>Crew Discovery</div>
-          <div className="subtle">Find and invite crew for upcoming events</div>
+          <div className="subtle">Find And Invite Crew For Upcoming Events</div>
         </div>
 
         <div style={{ display: "flex", gap: 6 }}>
@@ -249,7 +257,7 @@ export default function Discovery({ profileType, profile, onOpenEvent }) {
       </div>
 
       {crew.length === 0 ? (
-        <div className="alert">No crew match this filter.</div>
+        <div className="alert">No Crew Match This Filter.</div>
       ) : (
         <div style={{ display: "grid", gap: 8 }}>
           {crew.map((c) => (
@@ -269,7 +277,7 @@ export default function Discovery({ profileType, profile, onOpenEvent }) {
                     ? "Available"
                     : c.availability === "unavailable"
                     ? "Unavailable"
-                    : "No response"}
+                    : "No Response"}
                 </span>
                 <button className="btn btnSmall">Invite</button>
               </div>

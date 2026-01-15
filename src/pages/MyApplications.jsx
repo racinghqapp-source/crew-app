@@ -1,7 +1,8 @@
 // src/pages/MyApplications.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "../hooks/useSession";
-import { fetchMyApplications, withdrawApplication } from "../api/applications";
+import { fetchMyApplications } from "../api/applications";
+import { supabase } from "../lib/supabase";
 
 function Badge({ tone = "muted", children }) {
   const cls =
@@ -33,9 +34,11 @@ function statusTone(status) {
   }
 }
 
-function prettyStatus(status) {
+function prettyStatus(status, direction) {
   if (!status) return "Unknown";
-  return status.charAt(0).toUpperCase() + status.slice(1);
+  const s = String(status);
+  if (s === "shortlisted") return "Invited";
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 function fmtDate(d) {
@@ -89,13 +92,18 @@ export default function MyApplications() {
     return { applied, shortlisted, accepted, closed };
   }, [rows]);
 
-  async function onWithdraw(appId) {
-    if (!user?.id) return;
-    setBusyId(appId);
+  async function handleAccept(app) {
+    const eventId = app?.event?.id ?? app?.event_id;
+    if (!eventId) {
+      setErr("Missing Event For This Application.");
+      return;
+    }
+    setBusyId(app.id);
     setErr(null);
     try {
-      await withdrawApplication({ userId: user.id, applicationId: appId });
-      await load();
+      const { error } = await supabase.rpc("accept_invite", { p_event_id: eventId });
+      if (error) throw error;
+      setRows((prev) => prev.map((a) => (a.id === app.id ? { ...a, status: "accepted" } : a)));
     } catch (e) {
       setErr(e.message ?? String(e));
     } finally {
@@ -103,7 +111,43 @@ export default function MyApplications() {
     }
   }
 
-  if (loading) return <div className="card">Loading applications…</div>;
+  async function handleDecline(app) {
+    const eventId = app?.event?.id ?? app?.event_id;
+    if (!eventId) {
+      setErr("Missing Event For This Application.");
+      return;
+    }
+    setBusyId(app.id);
+    setErr(null);
+    try {
+      const { error } = await supabase.rpc("decline_invite", { p_event_id: eventId });
+      if (error) throw error;
+      setRows((prev) => prev.map((a) => (a.id === app.id ? { ...a, status: "declined" } : a)));
+    } catch (e) {
+      setErr(e.message ?? String(e));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleWithdraw(app) {
+    setBusyId(app.id);
+    setErr(null);
+    try {
+      const { error } = await supabase
+        .from("applications")
+        .update({ status: "withdrawn" })
+        .eq("id", app.id);
+      if (error) throw error;
+      setRows((prev) => prev.map((a) => (a.id === app.id ? { ...a, status: "withdrawn" } : a)));
+    } catch (e) {
+      setErr(e.message ?? String(e));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  if (loading) return <div className="card">Loading Applications…</div>;
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
@@ -112,7 +156,7 @@ export default function MyApplications() {
           <div>
             <h2 style={{ margin: 0 }}>My Applications</h2>
             <div className="subtle" style={{ marginTop: 6 }}>
-              Track invitations and applications. Withdraw if plans change.
+              Track Invitations And Applications. Withdraw If Plans Change.
             </div>
           </div>
           <button className="btn btnGhost" onClick={load}>
@@ -132,28 +176,27 @@ export default function MyApplications() {
 
       {rows.length === 0 ? (
         <div className="card">
-          <div style={{ fontWeight: 600 }}>No applications yet</div>
+          <div style={{ fontWeight: 600 }}>No Applications Yet</div>
           <div className="subtle" style={{ marginTop: 6 }}>
-            Head to Discover and apply to an event that suits you.
+            Head To Discover And Apply To An Event That Suits You.
           </div>
         </div>
       ) : (
         <>
-          <Section title="Applied" items={groups.applied} busyId={busyId} onWithdraw={onWithdraw} />
+          <Section title="Applied" items={groups.applied} busyId={busyId} />
           <Section
             title="Shortlisted"
             items={groups.shortlisted}
             busyId={busyId}
-            onWithdraw={onWithdraw}
           />
-          <Section title="Accepted" items={groups.accepted} busyId={busyId} onWithdraw={onWithdraw} />
-          <Section title="Closed" items={groups.closed} busyId={busyId} onWithdraw={onWithdraw} />
+          <Section title="Accepted" items={groups.accepted} busyId={busyId} />
+          <Section title="Closed" items={groups.closed} busyId={busyId} />
         </>
       )}
     </div>
   );
 
-  function Section({ title, items, busyId, onWithdraw }) {
+  function Section({ title, items, busyId }) {
     if (!items?.length) return null;
 
     return (
@@ -166,7 +209,9 @@ export default function MyApplications() {
         <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
           {items.map((r) => {
             const e = r.event;
-            const canWithdraw = r.status === "applied" || r.status === "shortlisted";
+            const status = String(r.status || "");
+            const isInvited = status === "invited" || status === "shortlisted";
+            const isAccepted = status === "accepted";
             return (
               <div
                 key={r.id}
@@ -184,7 +229,7 @@ export default function MyApplications() {
                     <div style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis" }}>
                       {e?.title ?? "Event"}
                     </div>
-                    <Badge tone={statusTone(r.status)}>{prettyStatus(r.status)}</Badge>
+                    <Badge tone={statusTone(r.status)}>{prettyStatus(r.status, r.direction)}</Badge>
                     {e?.status ? <Badge tone="muted">{String(e.status)}</Badge> : null}
                   </div>
 
@@ -198,7 +243,7 @@ export default function MyApplications() {
                   <div className="subtle" style={{ marginTop: 6 }}>
                     {r.preferred_role ? (
                       <>
-                        Preferred role: <b>{r.preferred_role}</b> •{" "}
+                        Preferred Role: <b>{r.preferred_role}</b> •{" "}
                       </>
                     ) : null}
                     Applied: {fmtDate(r.created_at)}
@@ -208,12 +253,31 @@ export default function MyApplications() {
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  {canWithdraw ? (
+                  {isInvited ? (
+                    <>
+                      <button
+                        className="btn btnPrimary"
+                        disabled={busyId === r.id}
+                        onClick={() => handleAccept(r)}
+                      >
+                        {busyId === r.id ? "Working…" : "Accept"}
+                      </button>
+                      <button
+                        className="btn btnGhost"
+                        disabled={busyId === r.id}
+                        onClick={() => handleDecline(r)}
+                      >
+                        {busyId === r.id ? "Working…" : "Decline"}
+                      </button>
+                    </>
+                  ) : null}
+
+                  {isAccepted ? (
                     <button
                       className="btn btnGhost"
                       disabled={busyId === r.id}
-                      onClick={() => onWithdraw(r.id)}
-                      title="Withdraw application"
+                      onClick={() => handleWithdraw(r)}
+                      title="Withdraw Application"
                     >
                       {busyId === r.id ? "Withdrawing…" : "Withdraw"}
                     </button>

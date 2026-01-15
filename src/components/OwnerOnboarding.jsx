@@ -49,15 +49,15 @@ export default function OwnerOnboarding({ boatCount, eventCount, onGoBoats, onGo
   return (
     <div style={{ marginTop: 12 }}>
       <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 10 }}>
-        <b>Owner setup</b> — do these once, then inviting is 2 clicks.
+        <b>Owner Setup</b> — Do These Once, Then Inviting Is 2 Clicks.
       </div>
 
       {needsBoats && (
         <Card
           tone="info"
-          title="1) Create your first boat"
-          desc="Your boat appears on events so sailors know what they’re sailing on (class, length, offshore capability)."
-          actionLabel="Create boat"
+          title="1) Create Your First Boat"
+          desc="Your Boat Appears On Events So Sailors Know What They’re Sailing On (Class, Length, Offshore Capability)."
+          actionLabel="Create Boat"
           onAction={onGoBoats}
         />
       )}
@@ -65,9 +65,9 @@ export default function OwnerOnboarding({ boatCount, eventCount, onGoBoats, onGo
       {needsEvents && (
         <Card
           tone="info"
-          title="2) Create your first event"
-          desc="Events are what you invite sailors to. Pick the boat, dates, location, and what roles you need."
-          actionLabel="Create event"
+          title="2) Create Your First Event"
+          desc="Events Are What You Invite Sailors To. Pick The Boat, Dates, Location, And What Roles You Need."
+          actionLabel="Create Event"
           onAction={onGoEvents}
         />
       )}

@@ -33,13 +33,63 @@ function Chip({ children }) {
   );
 }
 
+function Modal({ open, title, children, onClose }) {
+  if (!open) return null;
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(3, 7, 18, 0.35)",
+        display: "grid",
+        placeItems: "center",
+        padding: 16,
+        zIndex: 50,
+      }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose?.();
+      }}
+    >
+      <div
+        style={{
+          width: "min(760px, 100%)",
+          background: "white",
+          borderRadius: 16,
+          border: "1px solid #e5e7eb",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+          overflow: "hidden",
+          maxHeight: "90vh",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div
+          style={{
+            padding: 14,
+            borderBottom: "1px solid #eef2f7",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <div style={{ fontWeight: 900, color: "#0b2440" }}>{title}</div>
+          <button className="btn btnGhost" onClick={onClose}>
+            ✕
+          </button>
+        </div>
+        <div style={{ padding: 14, overflow: "auto" }}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
 function HomeClubSection({ user, profile, setProfile }) {
   const [q, setQ] = useState("");
   const [options, setOptions] = useState([]);
   const [selectedClub, setSelectedClub] = useState(null);
   const [showOther, setShowOther] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -59,12 +109,11 @@ function HomeClubSection({ user, profile, setProfile }) {
   useEffect(() => {
     let mounted = true;
     const t = setTimeout(async () => {
-      setLoading(true);
       try {
         const res = await searchYachtClubs(q);
         if (mounted) setOptions(res);
       } finally {
-        if (mounted) setLoading(false);
+        // no-op
       }
     }, 250);
     return () => {
@@ -103,12 +152,12 @@ function HomeClubSection({ user, profile, setProfile }) {
   return (
     <div style={{ border: "1px solid #e7e7e7", borderRadius: 16, padding: 14, background: "white" }}>
       <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 6 }}>
-        Home yacht club (recommended)
+        Home Yacht Club (Recommended)
       </div>
 
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
         <div style={{ fontWeight: 650 }}>
-          {selectedClub ? `${selectedClub.name} — ${selectedClub.state || ""}` : "None selected"}
+          {selectedClub ? `${selectedClub.name} — ${selectedClub.state || ""}` : "None Selected"}
         </div>
 
         <button
@@ -124,42 +173,24 @@ function HomeClubSection({ user, profile, setProfile }) {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
+          onBlur={(e) => {
+            const picked = options.find(
+              (c) =>
+                `${c.name}${c.state ? `, ${c.state}` : ""}`.toLowerCase() ===
+                String(e.target.value || "").toLowerCase()
+            );
+            if (picked) pickClub(picked);
+          }}
           placeholder="Search clubs (e.g. Sandringham, RPYC, Blairgowrie)…"
+          list="home-club-options"
           style={{ flex: 1, padding: "10px 12px", borderRadius: 12, border: "1px solid #ddd" }}
         />
-        <div style={{ alignSelf: "center", fontSize: 12, opacity: 0.75 }}>
-          {loading ? "Searching…" : `${options.length} results`}
-        </div>
-      </div>
-
-      <div style={{ marginTop: 10, maxHeight: 240, overflow: "auto" }}>
-        {options.map((club) => (
-          <button
-            key={club.id}
-            disabled={saving}
-            onClick={() => pickClub(club)}
-            style={{
-              width: "100%",
-              textAlign: "left",
-              padding: "10px 10px",
-              borderRadius: 12,
-              border: "1px solid transparent",
-              background: "transparent",
-              cursor: "pointer",
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.background = "#f6f7fb")}
-            onMouseOut={(e) => (e.currentTarget.style.background = "transparent")}
-          >
-            <div style={{ fontWeight: 650 }}>{club.name}</div>
-            <div style={{ fontSize: 12, opacity: 0.75 }}>{club.state}</div>
-          </button>
-        ))}
-
-        {!loading && options.length === 0 && (
-          <div style={{ padding: 10, opacity: 0.75 }}>
-            No matches. If you just loaded the clubs, this usually means RLS isn’t allowing reads.
-          </div>
-        )}
+        <datalist id="home-club-options">
+          {options.map((club) => {
+            const label = `${club.name}${club.state ? `, ${club.state}` : ""}`;
+            return <option key={club.id} value={label} />;
+          })}
+        </datalist>
       </div>
 
       <div style={{ marginTop: 10 }}>
@@ -168,22 +199,22 @@ function HomeClubSection({ user, profile, setProfile }) {
           onClick={() => setShowOther((v) => !v)}
           style={{ padding: 0, border: "none", background: "transparent", color: "#1a4fff", cursor: "pointer" }}
         >
-          Can’t find your club?
+          Can’t Find Your Club?
         </button>
 
         {showOther && (
           <div style={{ marginTop: 10 }}>
             <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 6 }}>
-              Other home port (optional)
+              Other Home Port (Optional)
             </div>
             <input
               defaultValue={profile?.home_port || ""}
               onBlur={(e) => saveOtherHomePort(e.target.value)}
-              placeholder="Type your home port / club name…"
+              placeholder="Type Your Home Port / Club Name…"
               style={{ width: "100%", padding: "10px 12px", borderRadius: 12, border: "1px solid #ddd" }}
             />
             <div style={{ fontSize: 12, opacity: 0.65, marginTop: 6 }}>
-              This is only used if your club isn’t in the list.
+              This Is Only Used If Your Club Isn’t In The List.
             </div>
           </div>
         )}
@@ -213,6 +244,8 @@ export default function Profile({ profile: initialProfile, onSaved }) {
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState(null);
   const [okMsg, setOkMsg] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
+  const [homeClubLabel, setHomeClubLabel] = useState("");
 
   async function load() {
     if (!user?.id) return;
@@ -232,6 +265,27 @@ export default function Profile({ profile: initialProfile, onSaved }) {
     if (user?.id) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        if (!p?.home_club_id) {
+          if (mounted) setHomeClubLabel("");
+          return;
+        }
+        const club = await fetchYachtClubById(p.home_club_id);
+        if (!mounted) return;
+        const label = club ? `${club.name}${club.state ? `, ${club.state}` : ""}` : "";
+        setHomeClubLabel(label);
+      } catch {
+        if (mounted) setHomeClubLabel("");
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [p?.home_club_id]);
 
   const complete = useMemo(() => (p ? !needsSailorOnboarding(p) : false), [p]);
 
@@ -259,6 +313,7 @@ export default function Profile({ profile: initialProfile, onSaved }) {
       setP(saved);
       setOkMsg("Saved ✅");
       onSaved?.();
+      setEditOpen(false);
     } catch (e) {
       setErr(e.message ?? String(e));
     } finally {
@@ -272,9 +327,9 @@ export default function Profile({ profile: initialProfile, onSaved }) {
     <div style={{ marginTop: 12, maxWidth: 900 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
         <div>
-          <h3 style={{ margin: 0, color: "#0b2440" }}>Your profile</h3>
+          <h3 style={{ margin: 0, color: "#0b2440" }}>Your Profile</h3>
           <div style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
-            Complete this to unlock the app.
+            Complete This To Unlock The App.
             <span style={{ marginLeft: 10 }}>{complete ? <Chip>Complete</Chip> : <Chip>Incomplete</Chip>}</span>
           </div>
         </div>
@@ -288,18 +343,11 @@ export default function Profile({ profile: initialProfile, onSaved }) {
             {loading ? "Refreshing…" : "Refresh"}
           </button>
           <button
-            onClick={save}
-            disabled={saving || loading || !p}
-            style={{
-              padding: "8px 12px",
-              borderRadius: 10,
-              border: "1px solid #0b2440",
-              background: "#0b2440",
-              color: "white",
-              fontWeight: 900,
-            }}
+            onClick={() => setEditOpen(true)}
+            disabled={loading || !p}
+            className="btn btnPrimary"
           >
-            {saving ? "Saving…" : "Save"}
+            Edit Profile
           </button>
         </div>
       </div>
@@ -308,13 +356,75 @@ export default function Profile({ profile: initialProfile, onSaved }) {
       {okMsg && <div style={{ color: "#166534", marginTop: 12 }}>{okMsg}</div>}
 
       {!p ? (
-        <div style={{ marginTop: 12, opacity: 0.75 }}>Loading profile…</div>
+        <div style={{ marginTop: 12, opacity: 0.75 }}>Loading Profile…</div>
       ) : (
         <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
-          <Section title="Basics (required)">
+          <Section title="Basics">
+            <div style={{ display: "grid", gap: 8 }}>
+              <div><b>Name:</b> {p.display_name || "—"}</div>
+              <div><b>Account type:</b> {p.profile_type || "—"}</div>
+              <div><b>Location:</b> {p.location_text || "—"}</div>
+            </div>
+          </Section>
+
+          <Section title="Home Yacht Club">
+            <div>{homeClubLabel || "—"}</div>
+          </Section>
+
+          {String(p.profile_type || "").toLowerCase() !== "owner" && (
+            <Section title="Roles">
+              <div>{Array.isArray(p.roles) && p.roles.length ? p.roles.join(", ") : "—"}</div>
+            </Section>
+          )}
+
+          {String(p.profile_type || "").toLowerCase() !== "owner" && (
+            <Section title="Experience">
+              <div>
+                {EXPERIENCE_OPTIONS.find((o) => o.id === p.experience_level)?.label || "—"}
+              </div>
+            </Section>
+          )}
+
+          <Section title="Availability & Qualifications">
+            <div style={{ display: "grid", gap: 6 }}>
+              <div>Offshore Qualified: <b>{p.offshore_qualified ? "Yes" : "No"}</b></div>
+              <div>Currently Available: <b>{p.is_available ? "Yes" : "No"}</b></div>
+              <div>Willing To Travel: <b>{p.willing_to_travel ? "Yes" : "No"}</b></div>
+            </div>
+          </Section>
+        </div>
+      )}
+
+      {!complete && (
+        <div
+          style={{
+            marginTop: 14,
+            padding: 12,
+            borderRadius: 14,
+            border: "1px solid #fed7aa",
+          background: "#fff7ed",
+          color: "#9a3412",
+          fontWeight: 800,
+        }}
+      >
+        Finish The Required Fields (Display Name + Account Type + Roles + Experience Level For Sailors)
+        To Unlock The App.
+      </div>
+      )}
+
+      <Modal
+        open={editOpen}
+        title="Edit Profile"
+        onClose={() => {
+          if (saving) return;
+          setEditOpen(false);
+        }}
+      >
+        <div style={{ display: "grid", gap: 12 }}>
+          <Section title="Basics (Required)">
             <div style={{ display: "grid", gap: 10 }}>
               <label style={{ fontSize: 12, opacity: 0.8 }}>
-                Display name <b style={{ color: "crimson" }}>*</b>
+                Display Name <b style={{ color: "crimson" }}>*</b>
               </label>
               <input
                 value={p.display_name ?? ""}
@@ -324,7 +434,7 @@ export default function Profile({ profile: initialProfile, onSaved }) {
               />
 
               <label style={{ fontSize: 12, opacity: 0.8 }}>
-                Account type <b style={{ color: "crimson" }}>*</b>
+                Account Type <b style={{ color: "crimson" }}>*</b>
               </label>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 {PROFILE_TYPES.map((t) => {
@@ -358,14 +468,14 @@ export default function Profile({ profile: initialProfile, onSaved }) {
             </div>
           </Section>
 
-          <Section title="Home yacht club">
+          <Section title="Home Yacht Club">
             <HomeClubSection user={user} profile={p} setProfile={setP} />
           </Section>
 
           {String(p.profile_type || "").toLowerCase() !== "owner" && (
-            <Section title="Roles (required for sailors)">
+            <Section title="Roles (Required For Sailors)">
               <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 10 }}>
-                Pick at least <b>one role</b> so owners can match you.
+                Pick At Least <b>One Role</b> So Owners Can Match You.
               </div>
 
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -397,8 +507,8 @@ export default function Profile({ profile: initialProfile, onSaved }) {
           )}
 
           {String(p.profile_type || "").toLowerCase() !== "owner" && (
-            <Section title="Sailing experience (required for sailors)">
-              <label style={{ fontSize: 12, opacity: 0.8 }}>Experience level</label>
+            <Section title="Sailing Experience (Required For Sailors)">
+              <label style={{ fontSize: 12, opacity: 0.8 }}>Experience Level</label>
               <select
                 value={p.experience_level ?? ""}
                 onChange={(e) =>
@@ -406,7 +516,7 @@ export default function Profile({ profile: initialProfile, onSaved }) {
                 }
                 style={{ padding: 12, borderRadius: 12, border: "1px solid #e5e7eb" }}
               >
-                <option value="">Select level</option>
+                <option value="">Select Level</option>
                 {EXPERIENCE_OPTIONS.map((opt) => (
                   <option key={opt.id} value={opt.id}>
                     {opt.label}
@@ -416,7 +526,7 @@ export default function Profile({ profile: initialProfile, onSaved }) {
             </Section>
           )}
 
-          <Section title="Availability & qualifications">
+          <Section title="Availability & Qualifications">
             <div style={{ display: "grid", gap: 10 }}>
               <label style={{ display: "flex", gap: 10, alignItems: "center" }}>
                 <input
@@ -424,7 +534,7 @@ export default function Profile({ profile: initialProfile, onSaved }) {
                   checked={!!p.offshore_qualified}
                   onChange={(e) => setP({ ...p, offshore_qualified: e.target.checked })}
                 />
-                Offshore qualified
+                Offshore Qualified
               </label>
 
               <label style={{ display: "flex", gap: 10, alignItems: "center" }}>
@@ -433,7 +543,7 @@ export default function Profile({ profile: initialProfile, onSaved }) {
                   checked={!!p.is_available}
                   onChange={(e) => setP({ ...p, is_available: e.target.checked })}
                 />
-                Currently available
+                Currently Available
               </label>
 
               <label style={{ display: "flex", gap: 10, alignItems: "center" }}>
@@ -442,29 +552,21 @@ export default function Profile({ profile: initialProfile, onSaved }) {
                   checked={!!p.willing_to_travel}
                   onChange={(e) => setP({ ...p, willing_to_travel: e.target.checked })}
                 />
-                Willing to travel
+                Willing To Travel
               </label>
             </div>
           </Section>
-        </div>
-      )}
 
-      {!complete && (
-        <div
-          style={{
-            marginTop: 14,
-            padding: 12,
-            borderRadius: 14,
-            border: "1px solid #fed7aa",
-            background: "#fff7ed",
-            color: "#9a3412",
-            fontWeight: 800,
-          }}
-        >
-          Finish the required fields (display name + account type + roles + experience level for sailors)
-          to unlock the app.
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+            <button className="btn btnGhost" disabled={saving} onClick={() => setEditOpen(false)}>
+              Cancel
+            </button>
+            <button className="btn btnPrimary" disabled={saving || loading || !p} onClick={save}>
+              {saving ? "Saving…" : "Save Changes"}
+            </button>
+          </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

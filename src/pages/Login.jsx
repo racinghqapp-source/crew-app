@@ -23,7 +23,7 @@ export default function Login({ onCreateAccount }) {
 
   return (
     <div style={{ maxWidth: 420, margin: "60px auto", padding: 16 }}>
-      <h2>Sign in</h2>
+      <h2>Sign In</h2>
       <form onSubmit={onSubmit}>
         <div style={{ marginBottom: 10 }}>
           <label>Email</label>
@@ -48,7 +48,7 @@ export default function Login({ onCreateAccount }) {
         {err && <div style={{ color: "crimson", marginBottom: 10 }}>{err}</div>}
 
         <button disabled={busy} style={{ padding: "10px 14px" }}>
-          {busy ? "Signing in..." : "Sign in"}
+          {busy ? "Signing In..." : "Sign In"}
         </button>
       </form>
 
@@ -65,7 +65,7 @@ export default function Login({ onCreateAccount }) {
             textDecoration: "underline",
           }}
         >
-          Create account
+          Create Account
         </button>
       </div>
     </div>

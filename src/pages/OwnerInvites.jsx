@@ -134,7 +134,7 @@ export default function OwnerInvites({ profileType }) {
       <Card>
         <h3 style={{ margin: 0 }}>Invites</h3>
         <div style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
-          This section appears for <b>owner</b> accounts.
+          This Section Appears For <b>Owner</b> Accounts.
         </div>
       </Card>
     );
@@ -174,14 +174,14 @@ export default function OwnerInvites({ profileType }) {
 
                     <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
                       <Chip>Reliability: {Number(r.sailor_reliability_score ?? 0)}</Chip>
-                      <Chip>Would again: {Number(r.sailor_would_sail_again_pct ?? 0)}%</Chip>
+                      <Chip>Would Again: {Number(r.sailor_would_sail_again_pct ?? 0)}%</Chip>
                       <Chip>Verified: {Number(r.sailor_verified_participations_count ?? 0)}</Chip>
                       <Chip>Band: {band}</Chip>
                     </div>
 
-                    <div style={{ marginTop: 10, padding: 10, borderRadius: 12, border: "1px solid #eee" }}>
-                      <div style={{ fontSize: 12, opacity: 0.7, fontWeight: 700 }}>
-                        {r.event_title ?? "Untitled event"}
+                      <div style={{ marginTop: 10, padding: 10, borderRadius: 12, border: "1px solid #eee" }}>
+                        <div style={{ fontSize: 12, opacity: 0.7, fontWeight: 700 }}>
+                        {r.event_title ?? "Untitled Event"}
                       </div>
                       <div style={{ marginTop: 4, fontSize: 13, opacity: 0.85 }}>{fmtWhen(r)}</div>
                       <div style={{ marginTop: 6, fontSize: 13 }}>
@@ -192,7 +192,7 @@ export default function OwnerInvites({ profileType }) {
                     {r.note ? (
                       <div style={{ marginTop: 10, padding: 10, borderRadius: 12, background: "#f9fafb" }}>
                         <div style={{ fontSize: 12, opacity: 0.7, fontWeight: 700, marginBottom: 4 }}>
-                          Your message
+                          Your Message
                         </div>
                         <div style={{ whiteSpace: "pre-wrap", fontSize: 13 }}>{r.note}</div>
                       </div>
@@ -213,7 +213,7 @@ export default function OwnerInvites({ profileType }) {
         <div>
           <h3 style={{ margin: 0 }}>Invites</h3>
           <div style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
-            Track who you’ve invited and their responses (uses status <b>Shortlisted</b> as “Invited”).
+            Track Who You’ve Invited And Their Responses (Uses Status <b>Shortlisted</b> As “Invited”).
           </div>
         </div>
 
@@ -226,16 +226,16 @@ export default function OwnerInvites({ profileType }) {
 
       {!rows.length && !loading && (
         <div style={{ marginTop: 12, opacity: 0.75, padding: 14, border: "1px dashed #ddd", borderRadius: 12 }}>
-          No invites yet. Go to <b>Discovery</b> → Invite a sailor.
+          No Invites Yet. Go To <b>Discovery</b> → Invite A Sailor.
         </div>
       )}
 
-      <Section title="Invited (waiting on sailor)" items={grouped.invited} toneStatus="shortlisted" />
+      <Section title="Invited (Waiting On Sailor)" items={grouped.invited} toneStatus="shortlisted" />
       <Section title="Accepted" items={grouped.accepted} toneStatus="accepted" />
       <Section title="Declined" items={grouped.declined} toneStatus="declined" />
 
       {/* Optional buckets (nice for later) */}
-      <Section title="Applied (sailors applied to you)" items={grouped.applied} toneStatus="applied" />
+      <Section title="Applied (Sailors Applied To You)" items={grouped.applied} toneStatus="applied" />
       <Section title="Withdrawn" items={grouped.withdrawn} toneStatus="withdrawn" />
       <Section title="Other" items={grouped.other} toneStatus="other" />
     </div>

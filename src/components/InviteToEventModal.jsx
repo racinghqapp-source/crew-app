@@ -111,11 +111,11 @@ export default function InviteToEventModal({
 
   async function send() {
     if (!eventId) {
-      setErr("Missing eventId — go back and open Invite from the event crew page.");
+      setErr("Missing EventId — Go Back And Open Invite From The Event Crew Page.");
       return;
     }
     if (!selected?.id) {
-      setErr("Pick a sailor first.");
+      setErr("Pick A Sailor First.");
       return;
     }
 
@@ -162,9 +162,9 @@ export default function InviteToEventModal({
           }}
         >
           <div>
-            <div style={{ fontSize: 18, fontWeight: 950, color: "#0b2440" }}>Invite sailor</div>
+            <div style={{ fontSize: 18, fontWeight: 950, color: "#0b2440" }}>Invite Sailor</div>
             <div style={{ fontSize: 12, opacity: 0.75, marginTop: 4 }}>
-              Pick a sailor, add role/note, and send the invite.
+              Pick A Sailor, Add Role/Note, And Send The Invite.
             </div>
           </div>
 
@@ -191,14 +191,14 @@ export default function InviteToEventModal({
           {/* Left: picker */}
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ fontSize: 16, fontWeight: 900, color: "#0b2440" }}>Choose sailor</div>
-              <div style={{ fontSize: 12, opacity: 0.7 }}>{filtered.length} shown</div>
+              <div style={{ fontSize: 16, fontWeight: 900, color: "#0b2440" }}>Choose Sailor</div>
+              <div style={{ fontSize: 12, opacity: 0.7 }}>{filtered.length} Shown</div>
             </div>
 
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search name, location, roles…"
+              placeholder="Search Name, Location, Roles…"
               style={{
                 marginTop: 10,
                 width: "100%",
@@ -225,7 +225,7 @@ export default function InviteToEventModal({
               }}
             >
               {loading ? (
-                <div style={{ padding: 14, opacity: 0.75 }}>Loading sailors…</div>
+                <div style={{ padding: 14, opacity: 0.75 }}>Loading Sailors…</div>
               ) : filtered.length ? (
                 filtered.map((p) => {
                   const isSel = selected?.id === p.id;
@@ -269,14 +269,14 @@ export default function InviteToEventModal({
                   );
                 })
               ) : (
-                <div style={{ padding: 14, opacity: 0.75 }}>No sailors found.</div>
+                <div style={{ padding: 14, opacity: 0.75 }}>No Sailors Found.</div>
               )}
             </div>
           </div>
 
           {/* Right: details */}
           <div>
-            <div style={{ fontSize: 16, fontWeight: 900, color: "#0b2440" }}>Invite details</div>
+            <div style={{ fontSize: 16, fontWeight: 900, color: "#0b2440" }}>Invite Details</div>
 
             <div
               style={{
@@ -287,7 +287,7 @@ export default function InviteToEventModal({
                 background: "white",
               }}
             >
-              <div style={{ fontSize: 12, opacity: 0.7 }}>Selected sailor</div>
+              <div style={{ fontSize: 12, opacity: 0.7 }}>Selected Sailor</div>
               <div style={{ marginTop: 8, fontSize: 18, fontWeight: 950, color: "#0b2440" }}>
                 {selected?.display_name ?? "—"}
               </div>
@@ -297,7 +297,7 @@ export default function InviteToEventModal({
             </div>
 
             <div style={{ marginTop: 12 }}>
-              <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 6 }}>Preferred role (optional)</div>
+              <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 6 }}>Preferred Role (Optional)</div>
               <input
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
@@ -313,11 +313,11 @@ export default function InviteToEventModal({
             </div>
 
             <div style={{ marginTop: 12 }}>
-              <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 6 }}>Note (optional)</div>
+              <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 6 }}>Note (Optional)</div>
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Add a short message…"
+                placeholder="Add A Short Message…"
                 rows={6}
                 style={{
                   width: "100%",
@@ -357,14 +357,14 @@ export default function InviteToEventModal({
                   fontWeight: 950,
                   cursor: canSend ? "pointer" : "not-allowed",
                 }}
-                title={!eventId ? "Missing eventId" : !selected?.id ? "Pick a sailor" : "Send invite"}
+                title={!eventId ? "Missing EventId" : !selected?.id ? "Pick A Sailor" : "Send Invite"}
               >
-                {sending ? "Sending…" : "Send invite"}
+                {sending ? "Sending…" : "Send Invite"}
               </button>
             </div>
 
             <div style={{ marginTop: 10, fontSize: 12, opacity: 0.65 }}>
-              Tip: If you invite the same sailor twice, the backend should return the existing application instead of creating duplicates.
+              Tip: If You Invite The Same Sailor Twice, The Backend Should Return The Existing Application Instead Of Creating Duplicates.
             </div>
           </div>
         </div>

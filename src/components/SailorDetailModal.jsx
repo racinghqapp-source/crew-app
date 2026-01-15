@@ -145,10 +145,10 @@ export default function SailorDetailModal({ isOpen, onClose, sailor, canInvite, 
 
             <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
               <Chip>Reliability: {Number(sailor?.reliability_score ?? 0)}</Chip>
-              <Chip>Would again: {Number(sailor?.would_sail_again_pct ?? 0)}%</Chip>
+              <Chip>Would Again: {Number(sailor?.would_sail_again_pct ?? 0)}%</Chip>
               <Chip>Verified: {Number(sailor?.verified_participations_count ?? 0)}</Chip>
               <Chip>Band: {String(sailor?.competence_band ?? "unknown").toUpperCase()}</Chip>
-              {!!sailor?.offshore_qualified && <Chip>Offshore qualified</Chip>}
+              {!!sailor?.offshore_qualified && <Chip>Offshore Qualified</Chip>}
               {!!sailor?.is_available && <Chip>Available</Chip>}
               {!!(sailor?.roles?.length) && <Chip>Roles: {sailor.roles.join(", ")}</Chip>}
             </div>
@@ -173,7 +173,7 @@ export default function SailorDetailModal({ isOpen, onClose, sailor, canInvite, 
                 fontWeight: 900,
                 cursor: canInvite ? "pointer" : "not-allowed",
               }}
-              title={canInvite ? "Invite to one of your events" : "Create an event first"}
+              title={canInvite ? "Invite To One Of Your Events" : "Create An Event First"}
             >
               Invite
             </button>
@@ -182,9 +182,9 @@ export default function SailorDetailModal({ isOpen, onClose, sailor, canInvite, 
 
         <hr style={{ margin: "14px 0" }} />
 
-        <div style={{ fontWeight: 900, color: "#0b2440" }}>Your event history with this sailor</div>
+        <div style={{ fontWeight: 900, color: "#0b2440" }}>Your Event History With This Sailor</div>
         <div style={{ marginTop: 6, fontSize: 12, opacity: 0.75 }}>
-          Shows which of <b>your</b> events they’ve already been invited to / applied to.
+          Shows Which Of <b>Your</b> Events They’ve Already Been Invited To / Applied To.
         </div>
 
         {loading && <div style={{ marginTop: 12, opacity: 0.75 }}>Loading…</div>}
@@ -192,7 +192,7 @@ export default function SailorDetailModal({ isOpen, onClose, sailor, canInvite, 
 
         {!loading && !rows.length && !err && (
           <div style={{ marginTop: 12, padding: 12, border: "1px dashed #ddd", borderRadius: 12, opacity: 0.85 }}>
-            No invites/applications yet for this sailor.
+            No Invites/Applications Yet For This Sailor.
           </div>
         )}
 
@@ -204,9 +204,9 @@ export default function SailorDetailModal({ isOpen, onClose, sailor, canInvite, 
 
               return (
                 <div key={r.id} style={{ border: "1px solid #eee", borderRadius: 12, padding: 12 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 900 }}>{ev?.title ?? "Untitled event"}</div>
+                      <div style={{ fontWeight: 900 }}>{ev?.title ?? "Untitled Event"}</div>
                       <div style={{ marginTop: 4, fontSize: 12, opacity: 0.8 }}>
                         {(ev?.start_date ?? "?")} → {(ev?.end_date ?? "?")} • {ev?.location_text ?? "—"}
                       </div>
@@ -214,7 +214,7 @@ export default function SailorDetailModal({ isOpen, onClose, sailor, canInvite, 
                         Boat: <b>{fmtBoat(boat)}</b>{" "}
                         {!!boat?.is_offshore_capable && (
                           <span style={{ marginLeft: 8 }}>
-                            <Chip tone={{ bg: "#eef2ff", border: "#c7d2fe", text: "#3730a3" }}>Offshore capable</Chip>
+                            <Chip tone={{ bg: "#eef2ff", border: "#c7d2fe", text: "#3730a3" }}>Offshore Capable</Chip>
                           </span>
                         )}
                       </div>
@@ -243,7 +243,7 @@ export default function SailorDetailModal({ isOpen, onClose, sailor, canInvite, 
         {/* subtle signal that we can prevent duplicates */}
         {!!invitedEventIds.size && (
           <div style={{ marginTop: 12, fontSize: 12, opacity: 0.7 }}>
-            Tip: the Invite flow can disable events already used for this sailor (next tweak).
+            Tip: The Invite Flow Can Disable Events Already Used For This Sailor (Next Tweak).
           </div>
         )}
       </div>

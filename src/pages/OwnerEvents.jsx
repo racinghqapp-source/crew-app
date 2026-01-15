@@ -142,7 +142,7 @@ export default function OwnerEvents({ profileType, onEventChanged }) {
       <Card>
         <h3 style={{ margin: 0 }}>Events</h3>
         <div style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
-          This section appears for <b>owner</b> accounts.
+          This Section Appears For <b>Owner</b> Accounts.
         </div>
       </Card>
     );
@@ -154,7 +154,7 @@ export default function OwnerEvents({ profileType, onEventChanged }) {
         <div>
           <h3 style={{ margin: 0 }}>Events</h3>
           <div style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
-            Create an event (choose a boat) → then invite sailors from Discovery.
+            Create An Event (Choose A Boat) → Then Invite Sailors From Discovery.
           </div>
         </div>
 
@@ -167,16 +167,16 @@ export default function OwnerEvents({ profileType, onEventChanged }) {
 
       {/* Create */}
       <Card>
-        <div style={{ fontWeight: 900, marginBottom: 10 }}>Create event</div>
+        <div style={{ fontWeight: 900, marginBottom: 10 }}>Create Event</div>
 
         {!boats.length ? (
           <div style={{ opacity: 0.75 }}>
-            You need at least <b>one boat</b> before creating an event. Go to the <b>Boats</b> tab first.
+            You Need At Least <b>One Boat</b> Before Creating An Event. Go To The <b>Boats</b> Tab First.
           </div>
         ) : (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 12 }}>
-              <Field label="Event title (required)">
+              <Field label="Event Title (Required)">
                 <Input
                   value={form.title}
                   onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
@@ -184,7 +184,7 @@ export default function OwnerEvents({ profileType, onEventChanged }) {
                 />
               </Field>
 
-              <Field label="Boat (required)">
+              <Field label="Boat (Required)">
                 <Select value={form.boat_id} onChange={(e) => setForm((f) => ({ ...f, boat_id: e.target.value }))}>
                   {boats.map((b) => (
                     <option key={b.id} value={b.id}>
@@ -194,7 +194,7 @@ export default function OwnerEvents({ profileType, onEventChanged }) {
                 </Select>
               </Field>
 
-              <Field label="Start date (required)">
+              <Field label="Start Date (Required)">
                 <Input
                   type="date"
                   value={form.start_date}
@@ -202,7 +202,7 @@ export default function OwnerEvents({ profileType, onEventChanged }) {
                 />
               </Field>
 
-              <Field label="End date (required)">
+              <Field label="End Date (Required)">
                 <Input
                   type="date"
                   value={form.end_date}
@@ -218,7 +218,7 @@ export default function OwnerEvents({ profileType, onEventChanged }) {
                 />
               </Field>
 
-              <Field label="Type / format">
+              <Field label="Type / Format">
                 <Select value={form.event_type} onChange={(e) => setForm((f) => ({ ...f, event_type: e.target.value }))}>
                   <option value="regatta">Regatta</option>
                   <option value="delivery">Delivery</option>
@@ -243,11 +243,11 @@ export default function OwnerEvents({ profileType, onEventChanged }) {
                   opacity: saving ? 0.7 : 1,
                 }}
               >
-                {saving ? "Creating…" : "Create event"}
+                {saving ? "Creating…" : "Create Event"}
               </button>
 
               <div style={{ fontSize: 12, opacity: 0.7 }}>
-                Tip: keep it <b>published</b> so it shows in Discovery.
+                Tip: Keep It <b>Published</b> So It Shows In Discovery.
               </div>
             </div>
           </>
@@ -274,7 +274,7 @@ export default function OwnerEvents({ profileType, onEventChanged }) {
                     {e.boat_class ? ` (${e.boat_class})` : ""}
                     {e.boat_length_m != null ? ` • ${e.boat_length_m}m` : ""}
                   </Pill>
-                  {e.boat_offshore_capable ? <Pill>Offshore capable</Pill> : null}
+                  {e.boat_offshore_capable ? <Pill>Offshore Capable</Pill> : null}
                 </div>
               </div>
             </div>
@@ -283,7 +283,7 @@ export default function OwnerEvents({ profileType, onEventChanged }) {
 
         {!events.length && (
           <div style={{ opacity: 0.75, padding: 14, border: "1px dashed #ddd", borderRadius: 12 }}>
-            No events yet — create your first event above.
+            No Events Yet — Create Your First Event Above.
           </div>
         )}
       </div>

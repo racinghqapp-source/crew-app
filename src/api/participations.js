@@ -42,3 +42,39 @@ export async function ownerSetCompleted(participationId) {
   });
   if (error) throw error;
 }
+
+export async function acceptInvite(participationId) {
+  if (!participationId) throw new Error("acceptInvite: missing id");
+
+  const { data, error } = await supabase
+    .from("participations")
+    .update({
+      sailor_confirmed: true,
+      completion_status: "accepted",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", participationId)
+    .select("*")
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function declineInvite(participationId) {
+  if (!participationId) throw new Error("declineInvite: missing id");
+
+  const { data, error } = await supabase
+    .from("participations")
+    .update({
+      sailor_confirmed: false,
+      completion_status: "declined",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", participationId)
+    .select("*")
+    .single();
+
+  if (error) throw error;
+  return data;
+}

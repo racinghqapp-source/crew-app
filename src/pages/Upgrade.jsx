@@ -40,15 +40,15 @@ export default function Upgrade({ userId, planTier, onUpgraded }) {
       <h3 style={{ marginTop: 0 }}>Upgrade</h3>
 
       <div style={{ fontSize: 12, opacity: 0.8 }}>
-        Your plan: <b>{String(planTier || "free").toUpperCase()}</b>
+        Your Plan: <b>{String(planTier || "free").toUpperCase()}</b>
       </div>
 
       <div style={{ marginTop: 12, lineHeight: "1.6" }}>
         <b>Owner Pro</b> unlocks:
         <ul style={{ marginTop: 6 }}>
-          <li>Rank applicants by trust score</li>
-          <li>See reliability / verified sails / would-sail-again</li>
-          <li>Accept / Reject applications</li>
+          <li>Rank Applicants By Trust Score</li>
+          <li>See Reliability / Verified Sails / Would-Sail-Again</li>
+          <li>Accept / Reject Applications</li>
         </ul>
       </div>
 
@@ -57,16 +57,16 @@ export default function Upgrade({ userId, planTier, onUpgraded }) {
       <div style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "center" }}>
         {!pro ? (
           <button disabled={busy || !userId} onClick={devActivatePro}>
-            {busy ? "Working…" : "Activate Pro (dev)"}
+            {busy ? "Working…" : "Activate Pro (Dev)"}
           </button>
         ) : (
           <button disabled={busy || !userId} onClick={devDowngradeFree}>
-            {busy ? "Working…" : "Downgrade to Free (dev)"}
+            {busy ? "Working…" : "Downgrade To Free (Dev)"}
           </button>
         )}
 
         <div style={{ fontSize: 12, opacity: 0.7 }}>
-          Payments (Stripe) will plug into this later.
+          Payments (Stripe) Will Plug Into This Later.
         </div>
       </div>
     </div>

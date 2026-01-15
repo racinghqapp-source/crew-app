@@ -102,7 +102,7 @@ function Row({ a, onAccept, onDecline, busy, isFull }) {
           </div>
           <Chip tone={toneForStatus(a.status)}>{labelForStatus(a.status)}</Chip>
           {a.preferred_role ? <Chip>{a.preferred_role}</Chip> : null}
-          {!!p?.offshore_qualified && <Chip>Offshore qualified</Chip>}
+          {!!p?.offshore_qualified && <Chip>Offshore Qualified</Chip>}
         </div>
 
         <div style={{ marginTop: 6, fontSize: 12, opacity: 0.8 }}>
@@ -112,7 +112,7 @@ function Row({ a, onAccept, onDecline, busy, isFull }) {
 
         {isFull && canDecide && !isAccepted && (
           <div style={{ marginTop: 6, fontSize: 12, opacity: 0.75 }}>
-            Crew is currently full — increase <b>crew_required</b> to accept more.
+            Crew Is Currently Full — Increase <b>crew_required</b> To Accept More.
           </div>
         )}
 
@@ -139,7 +139,7 @@ function Row({ a, onAccept, onDecline, busy, isFull }) {
                 fontWeight: 900,
                 cursor: acceptDisabled ? "not-allowed" : "pointer",
               }}
-              title={isFull && !isAccepted ? "Crew is full" : "Accept sailor"}
+              title={isFull && !isAccepted ? "Crew Is Full" : "Accept Sailor"}
             >
               {busy ? "Working…" : "Accept"}
             </button>
@@ -162,7 +162,7 @@ function Row({ a, onAccept, onDecline, busy, isFull }) {
           </>
         ) : (
           <div style={{ fontSize: 11, opacity: 0.7, width: 170, textAlign: "right" }}>
-            Decisions available for <b>Invited</b> and <b>Applied</b>.
+            Decisions Available For <b>Invited</b> And <b>Applied</b>.
           </div>
         )}
 
@@ -170,7 +170,7 @@ function Row({ a, onAccept, onDecline, busy, isFull }) {
           <button
             disabled={busy}
             onClick={() => {
-              const ok = window.confirm("Remove this sailor from the crew list?");
+              const ok = window.confirm("Remove This Sailor From The Crew List?");
               if (!ok) return;
               onDecline();
             }}
@@ -259,7 +259,7 @@ export default function EventCrewBoard({ eventId, profileType, onBack }) {
 
   async function onEditCrewRequired() {
     const current = event?.crew_required ?? "";
-    const next = window.prompt("Crew required (number). Leave blank to unset.", String(current));
+    const next = window.prompt("Crew Required (Number). Leave Blank To Unset.", String(current));
 
     if (next === null) return;
 
@@ -267,7 +267,7 @@ export default function EventCrewBoard({ eventId, profileType, onBack }) {
     try {
       const value = next.trim() === "" ? null : Number(next);
       if (value !== null && (!Number.isFinite(value) || value < 0)) {
-        setErr("Crew required must be a positive number (or blank to unset).");
+        setErr("Crew Required Must Be A Positive Number (Or Blank To Unset).");
         return;
       }
       await updateEventCrewRequired({ eventId, crewRequired: value });
@@ -297,9 +297,9 @@ export default function EventCrewBoard({ eventId, profileType, onBack }) {
   if (!isOwner) {
     return (
       <div style={{ marginTop: 12 }}>
-        <h3 style={{ margin: 0 }}>Event crew</h3>
+        <h3 style={{ margin: 0 }}>Event Crew</h3>
         <div style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
-          This page is for <b>owners</b>.
+          This Page Is For <b>Owners</b>.
         </div>
       </div>
     );
@@ -310,7 +310,7 @@ export default function EventCrewBoard({ eventId, profileType, onBack }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
         <div>
           <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            <h3 style={{ margin: 0 }}>Event crew</h3>
+            <h3 style={{ margin: 0 }}>Event Crew</h3>
 
             {event?.status ? <Chip>Status: {String(event.status).toUpperCase()}</Chip> : null}
 
@@ -336,7 +336,7 @@ export default function EventCrewBoard({ eventId, profileType, onBack }) {
                     cursor: "pointer",
                   }}
                 >
-                  Edit spots
+                  Edit Spots
                 </button>
               </>
             ) : (
@@ -353,16 +353,16 @@ export default function EventCrewBoard({ eventId, profileType, onBack }) {
                     cursor: "pointer",
                   }}
                 >
-                  Set spots
+                  Set Spots
                 </button>
               </>
             )}
 
-            {isFull && <Chip tone={{ bg: "#fff7ed", border: "#fed7aa", text: "#9a3412" }}>Crew full</Chip>}
+            {isFull && <Chip tone={{ bg: "#fff7ed", border: "#fed7aa", text: "#9a3412" }}>Crew Full</Chip>}
           </div>
 
           <div style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
-            <b>{event?.title ?? "Untitled event"}</b> • {event?.location_text ?? "—"} • Boat:{" "}
+            <b>{event?.title ?? "Untitled Event"}</b> • {event?.location_text ?? "—"} • Boat:{" "}
             <b>{fmtBoat(event?.boat)}</b>
             {!!event?.boat?.is_offshore_capable && (
               <>
@@ -394,7 +394,7 @@ export default function EventCrewBoard({ eventId, profileType, onBack }) {
               fontWeight: 900,
             }}
           >
-            + Invite sailor
+            + Invite Sailor
           </button>
 
           <button onClick={load} disabled={loading} style={{ padding: "8px 12px", borderRadius: 10 }}>
@@ -422,7 +422,7 @@ export default function EventCrewBoard({ eventId, profileType, onBack }) {
                 />
               ))
             ) : (
-              <div style={{ opacity: 0.7, fontSize: 13 }}>No invited sailors yet.</div>
+              <div style={{ opacity: 0.7, fontSize: 13 }}>No Invited Sailors Yet.</div>
             )}
           </div>
         </Card>
@@ -442,7 +442,7 @@ export default function EventCrewBoard({ eventId, profileType, onBack }) {
                 />
               ))
             ) : (
-              <div style={{ opacity: 0.7, fontSize: 13 }}>No applications yet.</div>
+              <div style={{ opacity: 0.7, fontSize: 13 }}>No Applications Yet.</div>
             )}
           </div>
         </Card>
@@ -462,7 +462,7 @@ export default function EventCrewBoard({ eventId, profileType, onBack }) {
                 />
               ))
             ) : (
-              <div style={{ opacity: 0.7, fontSize: 13 }}>No accepted crew yet.</div>
+              <div style={{ opacity: 0.7, fontSize: 13 }}>No Accepted Crew Yet.</div>
             )}
           </div>
         </Card>
@@ -475,7 +475,7 @@ export default function EventCrewBoard({ eventId, profileType, onBack }) {
                 .concat(groups.withdrawn)
                 .map((a) => <Row key={a.id} a={a} isFull={isFull} busy={false} onAccept={() => {}} onDecline={() => {}} />)
             ) : (
-              <div style={{ opacity: 0.7, fontSize: 13 }}>Nothing here.</div>
+              <div style={{ opacity: 0.7, fontSize: 13 }}>Nothing Here.</div>
             )}
           </div>
         </Card>
